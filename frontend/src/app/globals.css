@@ -60,3 +60,39 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+/* BreachEye layered animated wave background */
+.breacheye-wave-layer {
+  position: absolute;
+  width: 220%;
+  height: 150%;
+  left: -30%;
+  bottom: -5%;
+  animation: breacheyeWaveDrift 12s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.wave-layer-two {
+  animation-duration: 15s;
+  animation-delay: -4s;
+  opacity: 0.5;
+}
+
+.wave-layer-three {
+  animation-duration: 18s;
+  animation-delay: -7s;
+  opacity: 0.4;
+  filter: blur(0.5px);
+}
+
+@keyframes breacheyeWaveDrift {
+  0% {
+    transform: translateX(-5%) translateY(2px) scaleY(1);
+  }
+  50% {
+    transform: translateX(-12%) translateY(-2px) scaleY(1.05);
+  }
+  100% {
+    transform: translateX(-5%) translateY(2px) scaleY(1);
+  }
+}

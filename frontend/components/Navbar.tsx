@@ -3,8 +3,31 @@
 
 import React from "react";
 import Link from "next/link";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 const Navbar: React.FC = () => {
+  const { status } = useSession();
+  const isLoading = status === "loading";
+  const isAuthenticated = status === "authenticated";
+
+  const buttonLabel = isLoading
+    ? "Loading..."
+    : isAuthenticated
+    ? "Log Out"
+    : "Sign In";
+
+  const handleAuthAction = () => {
+    if (isLoading) return;
+
+    if (isAuthenticated) {
+      // After logout, go back to landing page
+      signOut({ callbackUrl: "/" });
+    } else {
+      // After login, go to dashboard
+      signIn("google", { callbackUrl: "/dashboard" });
+    }
+  };
+
   return (
     <nav className="w-full flex items-center justify-between p-4 border border-gray-600/50 rounded-2xl">
       {/* Left Side: BreachEye Logo */}
@@ -135,9 +158,13 @@ const Navbar: React.FC = () => {
           </svg>
         </button>
 
-        {/* Sign In Button */}
-        <button className="px-6 py-2 rounded-md text-white bg-[#B99332] hover:bg-[#D4AF37] transition-all font-medium ml-4">
-          Sign In
+        {/* Sign In / Log Out Button */}
+        <button
+          className="px-6 py-2 rounded-md text-white bg-[#B99332] hover:bg-[#D4AF37] transition-all font-medium ml-4 disabled:opacity-60 disabled:cursor-not-allowed"
+          onClick={handleAuthAction}
+          disabled={isLoading}
+        >
+          {buttonLabel}
         </button>
       </div>
     </nav>
