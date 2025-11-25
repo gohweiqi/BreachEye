@@ -2,6 +2,7 @@
   "dependencies": {
     "axios": "^1.12.2",
     "chart.js": "^4.5.1",
+    "next-auth": "^4.24.13",
     "react-chartjs-2": "^5.3.0",
     "tailwindcss": "^4.1.14"
   }
