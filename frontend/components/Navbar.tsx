@@ -3,12 +3,27 @@
 
 import React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 const Navbar: React.FC = () => {
   const { status } = useSession();
+  const pathname = usePathname();
   const isLoading = status === "loading";
   const isAuthenticated = status === "authenticated";
+
+  // Determine if we're on landing page or dashboard pages
+  const isLandingPage = pathname === "/";
+  const isDashboardPage =
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/notifications") ||
+    pathname?.startsWith("/settings");
+
+  // Show button only if:
+  // - On landing page and not authenticated (show Sign In)
+  // - On dashboard pages and authenticated (show Log Out)
+  const shouldShowButton =
+    (isLandingPage && !isAuthenticated) || (isDashboardPage && isAuthenticated);
 
   const buttonLabel = isLoading
     ? "Loading..."
@@ -159,13 +174,15 @@ const Navbar: React.FC = () => {
         </button>
 
         {/* Sign In / Log Out Button */}
-        <button
-          className="px-6 py-2 rounded-md text-white bg-[#B99332] hover:bg-[#D4AF37] transition-all font-medium ml-4 disabled:opacity-60 disabled:cursor-not-allowed"
-          onClick={handleAuthAction}
-          disabled={isLoading}
-        >
-          {buttonLabel}
-        </button>
+        {shouldShowButton && (
+          <button
+            className="px-6 py-2 rounded-md text-white bg-[#B99332] hover:bg-[#D4AF37] transition-all font-medium ml-4 disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={handleAuthAction}
+            disabled={isLoading}
+          >
+            {buttonLabel}
+          </button>
+        )}
       </div>
     </nav>
   );

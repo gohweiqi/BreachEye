@@ -1,14 +1,17 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 type SidebarItemProps = {
   label: string;
+  href: string;
   active?: boolean;
 };
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ label, active }) => {
+const SidebarItem: React.FC<SidebarItemProps> = ({ label, href, active }) => {
   const base =
     "w-full flex items-center px-3 py-2 rounded-lg text-sm transition-all border";
   const activeClasses =
@@ -17,18 +20,22 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ label, active }) => {
     "bg-transparent border-transparent text-gray-300 hover:bg-[#101010] hover:border-[#D4AF37]/40";
 
   return (
-    <button className={`${base} ${active ? activeClasses : inactiveClasses}`}>
+    <Link
+      href={href}
+      className={`${base} ${active ? activeClasses : inactiveClasses}`}
+    >
       {label}
-    </button>
+    </Link>
   );
 };
 
 const Sidebar: React.FC = () => {
   const { data } = useSession();
+  const pathname = usePathname();
   const email = data?.user?.email ?? "user@example.com";
 
   return (
-    <aside className="h-full rounded-2xl border border-[#D4AF37]/30 bg-gradient-to-b from-[#050505] to-[#020202] p-4 flex flex-col">
+    <aside className="w-64 flex-shrink-0 self-stretch rounded-2xl border border-[#D4AF37]/30 bg-gradient-to-b from-[#050505] to-[#020202] p-4 flex flex-col">
       {/* User info */}
       <div className="mb-6">
         <p className="text-sm font-semibold text-gray-100 truncate">{email}</p>
@@ -36,21 +43,44 @@ const Sidebar: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        {/* Overview */}
-        <SidebarItem label="Overview" active />
+        {/* Overview and Notifications - closer spacing */}
+        <div className="space-y-2">
+          <SidebarItem
+            label="Overview"
+            href="/dashboard"
+            active={pathname === "/dashboard"}
+          />
+          <SidebarItem
+            label="Notifications"
+            href="/notifications"
+            active={pathname === "/notifications"}
+          />
+        </div>
 
-        {/* Divider moved down */}
+        {/* Divider */}
         <div className="border-t border-gray-700/70 my-2 mt-6" />
 
-        {/* SETTINGS moved down */}
+        {/* SETTINGS */}
         <p className="text-[11px] tracking-[0.18em] text-gray-500 uppercase mt-4">
           Settings
         </p>
 
         <div className="space-y-2">
-          <SidebarItem label="Notifications" />
-          <SidebarItem label="Manage Email Address" />
-          <SidebarItem label="Manage Account" />
+          <SidebarItem
+            label="Notification Settings"
+            href="/settings/notificationsSettings"
+            active={pathname === "/settings/notificationsSettings"}
+          />
+          <SidebarItem
+            label="Manage Email Address"
+            href="/settings/manageEmailAccounts"
+            active={pathname === "/settings/manageEmailAccounts"}
+          />
+          <SidebarItem
+            label="Manage Account"
+            href="/settings/manageAccount"
+            active={pathname === "/settings/manageAccount"}
+          />
         </div>
       </div>
     </aside>

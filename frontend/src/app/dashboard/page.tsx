@@ -20,9 +20,7 @@ const DashboardPage: React.FC = () => {
       <div className="w-full max-w-screen-xl mx-auto">
         {/* Sidebar + Content */}
         <div className="mt-8 flex gap-6 items-stretch">
-          <div className="w-64">
-            <Sidebar />
-          </div>
+          <Sidebar />
 
           <div className="flex-1 flex flex-col gap-6">
             <BreachSummarySection />
