@@ -12,18 +12,17 @@ const Navbar: React.FC = () => {
   const isLoading = status === "loading";
   const isAuthenticated = status === "authenticated";
 
-  // Determine if we're on landing page or dashboard pages
-  const isLandingPage = pathname === "/";
+  // Determine if we're on landing page or dashboard pages (ignore query params)
+  const normalizedPath = pathname?.split("?")[0] ?? "/";
+  const isLandingPage = normalizedPath === "/";
   const isDashboardPage =
-    pathname?.startsWith("/dashboard") ||
-    pathname?.startsWith("/notifications") ||
-    pathname?.startsWith("/settings");
+    normalizedPath.startsWith("/dashboard") ||
+    normalizedPath.startsWith("/notifications") ||
+    normalizedPath.startsWith("/settings");
 
-  // Show button only if:
-  // - On landing page and not authenticated (show Sign In)
-  // - On dashboard pages and authenticated (show Log Out)
+  // Show button on landing page (always) and on dashboard pages when authenticated
   const shouldShowButton =
-    (isLandingPage && !isAuthenticated) || (isDashboardPage && isAuthenticated);
+    isLandingPage || (isDashboardPage && isAuthenticated);
 
   const buttonLabel = isLoading
     ? "Loading..."

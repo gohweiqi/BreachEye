@@ -2,23 +2,42 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Navbar from "../../../components/Navbar";
 import EmailCheckSection from "../../app/landingPage/components/EmailCheckSection";
 import StatisticsSection from "../../app/landingPage/components/StatisticsSection";
 import AboutUsSection from "../../app/landingPage/components/AboutUsSection";
 
 export default function LandingPage() {
+  const { status } = useSession();
+  const isAuthenticated = status === "authenticated";
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showAccountDeleted, setShowAccountDeleted] = useState(false);
 
   useEffect(() => {
     const deleted = searchParams.get("accountDeleted");
-    if (deleted === "true") {
+    if (!isAuthenticated && deleted === "true") {
       setShowAccountDeleted(true);
       router.replace("/", { scroll: false });
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isAuthenticated, router]);
+
+  if (isAuthenticated) {
+    return (
+      <main className="min-h-screen bg-black text-gray-300 flex items-center justify-center">
+        <p className="text-sm text-gray-400">
+          Redirecting to your dashboard...
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-[#0a0a0a] to-black text-gray-200 flex flex-col items-center justify-start px-6 py-10">

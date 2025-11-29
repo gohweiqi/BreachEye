@@ -126,33 +126,7 @@ const ManageAccountPage: React.FC = () => {
                 Data Management
               </h2>
 
-              <p className="text-sm md:text-base text-gray-400 mb-6 leading-relaxed">
-                Export your data or permanently delete your account.
-              </p>
-
               <div className="space-y-4">
-                {/* Export Data */}
-                <div className="flex items-start justify-between p-4 rounded-lg border border-[#D4AF37]/20 bg-[#0a0a0a]/50 hover:border-[#D4AF37]/40 transition-all">
-                  <div className="flex-1 mr-4">
-                    <h3 className="text-base font-semibold text-gray-50 mb-1">
-                      Export Your Data
-                    </h3>
-                    <p className="text-sm text-gray-400">
-                      Download a copy of all your account data, including
-                      monitored emails and breach history.
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <button
-                      onClick={() => setShowExportConfirm(true)}
-                      disabled={isExporting}
-                      className="px-8 py-2 rounded-lg text-sm font-medium bg-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/30 transition border border-[#D4AF37]/40 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                    >
-                      {isExporting ? "Exporting..." : "Export Data"}
-                    </button>
-                  </div>
-                </div>
-
                 {/* Delete Account */}
                 <div className="flex items-start justify-between p-4 rounded-lg border border-red-500/30 bg-red-500/5 hover:border-red-500/50 transition-all">
                   <div className="flex-1 mr-4">
@@ -205,37 +179,6 @@ const ManageAccountPage: React.FC = () => {
                 className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isDeleting ? "Deleting..." : "Delete Account"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Export Data Confirmation Modal */}
-      {showExportConfirm && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
-          <div className="bg-gradient-to-b from-[#050505] to-[#020202] border border-[#D4AF37]/50 rounded-2xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-[#D4AF37] mb-2">
-              Export Your Data
-            </h3>
-            <p className="text-gray-400 mb-6">
-              We'll prepare a downloadable file containing all your account
-              data. This may take a few minutes. You'll receive an email when
-              your export is ready.
-            </p>
-            <div className="flex gap-4">
-              <button
-                onClick={() => setShowExportConfirm(false)}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-gray-700 text-gray-200 hover:bg-gray-600 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleExportData}
-                disabled={isExporting}
-                className="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-[#D4AF37] text-black hover:bg-[#f3d46f] transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isExporting ? "Preparing..." : "Start Export"}
               </button>
             </div>
           </div>
