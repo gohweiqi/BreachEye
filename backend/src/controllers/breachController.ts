@@ -1,0 +1,303 @@
+import { Request, Response } from "express";
+import {
+  XposedOrNotService,
+  BreachCheckResponse,
+  BreachAnalyticsResponse,
+} from "../services/xposedOrNotService";
+
+/**
+ * Controller for handling breach-related requests
+ */
+export class BreachController {
+  /**
+   * Check if an email has been breached
+   * GET /api/breach/check/:email
+   */
+  static async checkEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.params;
+
+      if (!email) {
+        res.status(400).json({
+          success: false,
+          error: "Email parameter is required",
+        });
+        return;
+      }
+
+      const breachData = await XposedOrNotService.checkEmail(email);
+
+      // Check if email was found in breaches
+      if (breachData.Error === "Not found") {
+        res.status(200).json({
+          success: true,
+          breached: false,
+          breaches: [],
+          message: "No breaches found for this email",
+        });
+        return;
+      }
+
+      // Email was found in breaches
+      const breaches = breachData.breaches?.[0] || [];
+
+      res.status(200).json({
+        success: true,
+        breached: breaches.length > 0,
+        breaches: breaches,
+        breachCount: breaches.length,
+      });
+    } catch (error) {
+      console.error("Error checking email breach:", error);
+      
+      // Provide more helpful error messages
+      let errorMessage = "Internal server error";
+      let statusCode = 500;
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Map specific errors to appropriate status codes
+        if (error.message.includes("403") || error.message.includes("forbidden")) {
+          statusCode = 503; // Service unavailable (API blocking)
+          errorMessage = "The breach checking service is temporarily unavailable. Please try again in a few minutes.";
+        } else if (error.message.includes("429") || error.message.includes("rate limit")) {
+          statusCode = 429;
+        } else if (error.message.includes("timeout")) {
+          statusCode = 504; // Gateway timeout
+        }
+      }
+      
+      res.status(statusCode).json({
+        success: false,
+        error: errorMessage,
+      });
+    }
+  }
+
+  /**
+   * Get comprehensive breach analytics for an email
+   * GET /api/breach/analytics/:email
+   */
+  static async getAnalytics(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.params;
+
+      if (!email) {
+        res.status(400).json({
+          success: false,
+          error: "Email parameter is required",
+        });
+        return;
+      }
+
+      const analyticsData = await XposedOrNotService.getBreachAnalytics(email);
+
+      // Calculate risk score
+      const riskScore = XposedOrNotService.calculateRiskScore(analyticsData);
+
+      // Extract breach details
+      const breachDetails =
+        analyticsData.ExposedBreaches?.breaches_details || [];
+      const breachSummary = analyticsData.BreachesSummary;
+      const breachMetrics = analyticsData.BreachMetrics;
+
+      // Format yearly data for easier consumption
+      const yearlyData = breachMetrics?.yearwise_details?.[0] || {};
+      const yearHistory = Object.entries(yearlyData)
+        .filter(([key]) => key.startsWith("y"))
+        .map(([key, value]) => ({
+          year: parseInt(key.replace("y", "")),
+          count: value as number,
+        }))
+        .sort((a, b) => a.year - b.year);
+
+      res.status(200).json({
+        success: true,
+        email: email,
+        riskScore: riskScore,
+        breachCount: breachDetails.length,
+        breachSummary: breachSummary,
+        breaches: breachDetails.map((breach) => ({
+          name: breach.breach || breach.breachID,
+          domain: breach.domain,
+          date: breach.breachedDate,
+          exposedData: breach.exposedData,
+          exposedRecords: breach.exposedRecords,
+          description: breach.exposureDescription,
+          industry: breach.industry,
+          passwordRisk: breach.passwordRisk,
+          verified: breach.verified,
+          logo: breach.logo,
+        })),
+        metrics: {
+          risk: breachMetrics?.risk?.[0],
+          passwordStrength: breachMetrics?.passwords_strength?.[0],
+          industry: breachMetrics?.industry,
+          exposedDataTypes: breachMetrics?.xposed_data,
+        },
+        yearHistory: yearHistory,
+        pastes: analyticsData.PastesSummary,
+      });
+    } catch (error) {
+      console.error("Error getting breach analytics:", error);
+
+      if (
+        error instanceof Error &&
+        error.message.includes("No breach data found")
+      ) {
+        res.status(404).json({
+          success: false,
+          error: error.message,
+        });
+        return;
+      }
+
+      // Provide more helpful error messages
+      let errorMessage = "Internal server error";
+      let statusCode = 500;
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Map specific errors to appropriate status codes
+        if (error.message.includes("403") || error.message.includes("forbidden")) {
+          statusCode = 503; // Service unavailable (API blocking)
+          errorMessage = "The breach checking service is temporarily unavailable. Please try again in a few minutes.";
+        } else if (error.message.includes("429") || error.message.includes("rate limit")) {
+          statusCode = 429;
+        } else if (error.message.includes("timeout")) {
+          statusCode = 504; // Gateway timeout
+        }
+      }
+      
+      res.status(statusCode).json({
+        success: false,
+        error: errorMessage,
+      });
+    }
+  }
+
+  /**
+   * Combined endpoint: check email and get basic analytics
+   * POST /api/breach/check
+   * Body: { email: string }
+   */
+  static async checkEmailWithDetails(
+    req: Request,
+    res: Response
+  ): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        res.status(400).json({
+          success: false,
+          error: "Email is required in request body",
+        });
+        return;
+      }
+
+      // First check if email is breached
+      const breachCheck = await XposedOrNotService.checkEmail(email);
+
+      if (breachCheck.Error === "Not found") {
+        res.status(200).json({
+          success: true,
+          breached: false,
+          breaches: [],
+          breachCount: 0,
+          riskScore: 0,
+          message: "No breaches found for this email",
+        });
+        return;
+      }
+
+      // If breached, get analytics
+      const analyticsData = await XposedOrNotService.getBreachAnalytics(email);
+      const riskScore = XposedOrNotService.calculateRiskScore(analyticsData);
+      const breaches = breachCheck.breaches?.[0] || [];
+      const breachDetails =
+        analyticsData.ExposedBreaches?.breaches_details || [];
+
+      // Get latest incident
+      const latestBreach =
+        breachDetails.length > 0
+          ? breachDetails.sort((a, b) => {
+              const dateA = a.breachedDate
+                ? new Date(a.breachedDate).getTime()
+                : 0;
+              const dateB = b.breachedDate
+                ? new Date(b.breachedDate).getTime()
+                : 0;
+              return dateB - dateA;
+            })[0]
+          : null;
+
+      // Format latest incident
+      const latestIncident = latestBreach
+        ? `${latestBreach.breach || latestBreach.breachID} · ${
+            latestBreach.breachedDate
+              ? new Date(latestBreach.breachedDate).toLocaleDateString(
+                  "en-US",
+                  {
+                    month: "short",
+                    year: "numeric",
+                  }
+                )
+              : "Unknown date"
+          }`
+        : undefined;
+
+      // Format yearly history
+      const yearlyData =
+        analyticsData.BreachMetrics?.yearwise_details?.[0] || {};
+      const yearHistory = Object.entries(yearlyData)
+        .filter(([key]) => key.startsWith("y"))
+        .map(([key, value]) => ({
+          year: parseInt(key.replace("y", "")),
+          count: value as number,
+        }))
+        .sort((a, b) => a.year - b.year)
+        .filter((entry) => entry.count > 0);
+
+      res.status(200).json({
+        success: true,
+        breached: true,
+        breachCount: breaches.length,
+        riskScore: riskScore,
+        breaches: breaches,
+        latestIncident: latestIncident,
+        totalBreaches: breachDetails.length,
+        yearHistory: yearHistory,
+      });
+    } catch (error) {
+      console.error("Error checking email with details:", error);
+      
+      // Provide more helpful error messages
+      let errorMessage = "Internal server error";
+      let statusCode = 500;
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Map specific errors to appropriate status codes
+        if (error.message.includes("403") || error.message.includes("forbidden")) {
+          statusCode = 503; // Service unavailable (API blocking)
+          errorMessage = "The breach checking service is temporarily unavailable. Please try again in a few minutes.";
+        } else if (error.message.includes("429") || error.message.includes("rate limit")) {
+          statusCode = 429;
+        } else if (error.message.includes("timeout")) {
+          statusCode = 504; // Gateway timeout
+        }
+      }
+      
+      res.status(statusCode).json({
+        success: false,
+        error: errorMessage,
+      });
+    }
+  }
+}
+
+

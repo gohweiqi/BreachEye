@@ -88,12 +88,6 @@ export default function AboutUsSection() {
           breach information more visible, understandable, and actionable for
           everyday users.
         </p>
-        <a
-          href="#statistics"
-          className="px-5 py-2 rounded-xl border border-[#D4AF37]/60 text-[#D4AF37] hover:bg-[#D4AF37]/10 transition"
-        >
-          Explore More →
-        </a>
       </div>
     </section>
   );

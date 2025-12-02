@@ -5,8 +5,9 @@ import React from "react";
 import Navbar from "../../../components/Navbar";
 import Sidebar from "../../app/dashboard/components/Sidebar";
 import BreachSummarySection from "./components/BreachSummarySection";
-import RecommendedActionsSection from "./components/RecommendedActionsSection";
+import EmailBreachInsightsSection from "./components/EmailBreachInsightsSection";
 import BreachHistorySection from "./components/BreachHistorySection";
+import RecommendedActionsSection from "./components/RecommendedActionsSection";
 
 const DashboardPage: React.FC = () => {
   return (
@@ -24,6 +25,7 @@ const DashboardPage: React.FC = () => {
 
           <div className="flex-1 flex flex-col gap-6">
             <BreachSummarySection />
+            <EmailBreachInsightsSection />
             <BreachHistorySection />
             <RecommendedActionsSection />
           </div>
