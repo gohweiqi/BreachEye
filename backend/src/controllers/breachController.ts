@@ -49,25 +49,32 @@ export class BreachController {
       });
     } catch (error) {
       console.error("Error checking email breach:", error);
-      
+
       // Provide more helpful error messages
       let errorMessage = "Internal server error";
       let statusCode = 500;
-      
+
       if (error instanceof Error) {
         errorMessage = error.message;
-        
+
         // Map specific errors to appropriate status codes
-        if (error.message.includes("403") || error.message.includes("forbidden")) {
+        if (
+          error.message.includes("403") ||
+          error.message.includes("forbidden")
+        ) {
           statusCode = 503; // Service unavailable (API blocking)
-          errorMessage = "The breach checking service is temporarily unavailable. Please try again in a few minutes.";
-        } else if (error.message.includes("429") || error.message.includes("rate limit")) {
+          errorMessage =
+            "The breach checking service is temporarily unavailable. Please try again in a few minutes.";
+        } else if (
+          error.message.includes("429") ||
+          error.message.includes("rate limit")
+        ) {
           statusCode = 429;
         } else if (error.message.includes("timeout")) {
           statusCode = 504; // Gateway timeout
         }
       }
-      
+
       res.status(statusCode).json({
         success: false,
         error: errorMessage,
@@ -156,21 +163,28 @@ export class BreachController {
       // Provide more helpful error messages
       let errorMessage = "Internal server error";
       let statusCode = 500;
-      
+
       if (error instanceof Error) {
         errorMessage = error.message;
-        
+
         // Map specific errors to appropriate status codes
-        if (error.message.includes("403") || error.message.includes("forbidden")) {
+        if (
+          error.message.includes("403") ||
+          error.message.includes("forbidden")
+        ) {
           statusCode = 503; // Service unavailable (API blocking)
-          errorMessage = "The breach checking service is temporarily unavailable. Please try again in a few minutes.";
-        } else if (error.message.includes("429") || error.message.includes("rate limit")) {
+          errorMessage =
+            "The breach checking service is temporarily unavailable. Please try again in a few minutes.";
+        } else if (
+          error.message.includes("429") ||
+          error.message.includes("rate limit")
+        ) {
           statusCode = 429;
         } else if (error.message.includes("timeout")) {
           statusCode = 504; // Gateway timeout
         }
       }
-      
+
       res.status(statusCode).json({
         success: false,
         error: errorMessage,
@@ -273,25 +287,32 @@ export class BreachController {
       });
     } catch (error) {
       console.error("Error checking email with details:", error);
-      
+
       // Provide more helpful error messages
       let errorMessage = "Internal server error";
       let statusCode = 500;
-      
+
       if (error instanceof Error) {
         errorMessage = error.message;
-        
+
         // Map specific errors to appropriate status codes
-        if (error.message.includes("403") || error.message.includes("forbidden")) {
+        if (
+          error.message.includes("403") ||
+          error.message.includes("forbidden")
+        ) {
           statusCode = 503; // Service unavailable (API blocking)
-          errorMessage = "The breach checking service is temporarily unavailable. Please try again in a few minutes.";
-        } else if (error.message.includes("429") || error.message.includes("rate limit")) {
+          errorMessage =
+            "The breach checking service is temporarily unavailable. Please try again in a few minutes.";
+        } else if (
+          error.message.includes("429") ||
+          error.message.includes("rate limit")
+        ) {
           statusCode = 429;
         } else if (error.message.includes("timeout")) {
           statusCode = 504; // Gateway timeout
         }
       }
-      
+
       res.status(statusCode).json({
         success: false,
         error: errorMessage,
@@ -299,5 +320,3 @@ export class BreachController {
     }
   }
 }
-
-

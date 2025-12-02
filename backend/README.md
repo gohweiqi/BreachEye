@@ -187,5 +187,3 @@ backend/
 
 - [XposedOrNot API Documentation](https://xposedornot.com/api_doc)
 - [XposedOrNot API Playground](https://xposedornot.com/api_doc)
-
-

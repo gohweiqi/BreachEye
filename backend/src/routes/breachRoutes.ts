@@ -25,5 +25,3 @@ router.get("/analytics/:email", BreachController.getAnalytics);
 router.post("/check", BreachController.checkEmailWithDetails);
 
 export default router;
-
-
