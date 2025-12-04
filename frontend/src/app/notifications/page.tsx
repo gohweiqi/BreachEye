@@ -35,8 +35,8 @@ const NotificationsListPage: React.FC = () => {
     {
       id: 3,
       type: "summary",
-      title: "Weekly summary",
-      message: "All monitored emails are secure this week",
+      title: "Monthly summary",
+      message: "All monitored emails are secure this month",
       time: "3 days ago",
       read: true,
     },

@@ -125,18 +125,122 @@ export class BreachController {
         riskScore: riskScore,
         breachCount: breachDetails.length,
         breachSummary: breachSummary,
-        breaches: breachDetails.map((breach) => ({
-          name: breach.breach || breach.breachID,
-          domain: breach.domain,
-          date: breach.breachedDate,
-          exposedData: breach.exposedData,
-          exposedRecords: breach.exposedRecords,
-          description: breach.exposureDescription,
-          industry: breach.industry,
-          passwordRisk: breach.passwordRisk,
-          verified: breach.verified,
-          logo: breach.logo,
-        })),
+        breaches: breachDetails.map((breach: any) => {
+          // Extract exposed data - handle both array and string formats
+          let exposedData = breach.exposedData;
+
+          // If exposedData is a string (semicolon-separated), convert to array
+          if (typeof exposedData === "string") {
+            exposedData = exposedData
+              .split(";")
+              .map((item: string) => item.trim())
+              .filter((item: string) => item.length > 0);
+          }
+
+          // If still no exposed data, try to get from xposed_data in metrics
+          if (!exposedData || exposedData.length === 0) {
+            if (
+              breachMetrics?.xposed_data &&
+              Array.isArray(breachMetrics.xposed_data)
+            ) {
+              // Extract from nested structure
+              const extractDataTypes = (data: any): string[] => {
+                const types: string[] = [];
+                if (Array.isArray(data)) {
+                  data.forEach((item: any) => {
+                    if (item?.children) {
+                      item.children.forEach((child: any) => {
+                        if (child?.children) {
+                          child.children.forEach((leaf: any) => {
+                            if (leaf?.name && leaf.name.startsWith("data_")) {
+                              types.push(
+                                leaf.name
+                                  .replace("data_", "")
+                                  .replace(/_/g, " ")
+                              );
+                            }
+                          });
+                        }
+                      });
+                    }
+                  });
+                }
+                return types;
+              };
+              exposedData = extractDataTypes(breachMetrics.xposed_data);
+            }
+          }
+
+          // Construct logo URL - handle both relative and absolute paths
+          let logoUrl = breach.logo;
+          if (logoUrl && !logoUrl.startsWith("http")) {
+            // If it's a relative path or filename, construct full URL
+            if (logoUrl.startsWith("/")) {
+              logoUrl = `https://xposedornot.com${logoUrl}`;
+            } else {
+              logoUrl = `https://xposedornot.com/static/logos/${logoUrl}`;
+            }
+          }
+
+          // Extract date - handle multiple formats
+          let breachDate = breach.breachedDate;
+          if (!breachDate && breach.details) {
+            // Try to extract date from description
+            const dateMatch = breach.details.match(/\b(\d{4}-\d{2}-\d{2})\b/);
+            if (dateMatch) {
+              breachDate = dateMatch[1];
+            }
+          }
+
+          return {
+            name:
+              breach.breach ||
+              breach.breachID ||
+              breach["Breach ID"] ||
+              "Unknown Breach",
+            domain: breach.domain || breach.Domain || undefined,
+            date: breachDate || breach["Breached Date"] || undefined,
+            exposedData:
+              exposedData && exposedData.length > 0 ? exposedData : undefined,
+            exposedRecords:
+              breach.exposedRecords || breach["Exposed Records"] || undefined,
+            description:
+              breach.exposureDescription ||
+              breach.details ||
+              breach["Exposure Description"] ||
+              undefined,
+            industry: breach.industry || breach.Industry || undefined,
+            passwordRisk:
+              breach.passwordRisk || breach["Password Risk"] || undefined,
+            verified:
+              breach.verified !== undefined
+                ? breach.verified
+                : breach.Verified === "Yes"
+                ? true
+                : breach.Verified === "No"
+                ? false
+                : undefined,
+            logo: logoUrl || undefined,
+            referenceURL:
+              breach.referenceURL || breach["Reference URL"] || undefined,
+            searchable:
+              breach.searchable !== undefined
+                ? breach.searchable
+                : breach.Searchable === "Yes"
+                ? true
+                : breach.Searchable === "No"
+                ? false
+                : undefined,
+            sensitive:
+              breach.sensitive !== undefined
+                ? breach.sensitive
+                : breach.Sensitive === "Yes"
+                ? true
+                : breach.Sensitive === "No"
+                ? false
+                : undefined,
+          };
+        }),
         metrics: {
           risk: breachMetrics?.risk?.[0],
           passwordStrength: breachMetrics?.passwords_strength?.[0],

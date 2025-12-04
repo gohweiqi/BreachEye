@@ -40,6 +40,7 @@ export interface BreachAnalyticsResponse {
       exposedData?: string[];
       exposedRecords?: number;
       exposureDescription?: string;
+      details?: string;
       industry?: string;
       logo?: string;
       passwordRisk?: string;
@@ -185,7 +186,7 @@ export class XposedOrNotService {
             Accept: "application/json",
             "Accept-Language": "en-US,en;q=0.9",
           },
-          timeout: 15000, // 15 second timeout for analytics
+          timeout: 30000, // 30 second timeout for analytics (API can be slow)
           validateStatus: (status) => {
             // Accept all status codes so we can handle them manually
             return status >= 200 && status < 600;

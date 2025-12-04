@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import Navbar from "../../../components/Navbar";
 import EmailCheckSection from "../../app/landingPage/components/EmailCheckSection";
 import StatisticsSection from "../../app/landingPage/components/StatisticsSection";
-import AboutUsSection from "../../app/landingPage/components/AboutUsSection";
+import AboutProjectSection from "./components/AboutProjectSection";
 
 export default function LandingPage() {
   const { status } = useSession();
@@ -100,7 +100,7 @@ export default function LandingPage() {
 
       <StatisticsSection />
 
-      <AboutUsSection />
+      <AboutProjectSection />
     </main>
   );
 }

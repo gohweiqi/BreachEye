@@ -1,11 +1,82 @@
 // src/app/dashboard/components/BreachSummarySection.tsx
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
+import Link from "next/link";
+import { MonitoredEmail } from "@/lib/api/emailApi";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  ChartData,
+} from "chart.js";
+import { Pie } from "react-chartjs-2";
 
-const BreachSummarySection: React.FC = () => {
-  const totalExposures = 0; // later from API
+ChartJS.register(ArcElement, Tooltip, Legend);
 
+interface BreachSummarySectionProps {
+  totalExposures: number;
+  isBreached: boolean;
+  userEmail: string;
+  monitoredEmails: MonitoredEmail[];
+}
+
+const BreachSummarySection: React.FC<BreachSummarySectionProps> = ({
+  totalExposures,
+  isBreached,
+  userEmail,
+  monitoredEmails,
+}) => {
+  // Prepare data for pie chart - only emails with breaches
+  const breachBreakdown = useMemo(() => {
+    const emailsWithBreaches = monitoredEmails.filter(
+      (email) => email.breaches > 0
+    );
+
+    if (emailsWithBreaches.length === 0) return null;
+
+    const colors = [
+      "#D4AF37",
+      "#f6e39a",
+      "#B99332",
+      "#E5C97E",
+      "#fbbf24",
+      "#fde68a",
+    ];
+
+    return {
+      labels: emailsWithBreaches.map((email) => {
+        // Truncate long emails for display
+        const displayEmail =
+          email.email.length > 20
+            ? email.email.substring(0, 17) + "..."
+            : email.email;
+        return `${displayEmail} (${email.breaches})`;
+      }),
+      data: emailsWithBreaches.map((email) => email.breaches),
+      colors: emailsWithBreaches.map(
+        (_, index) => colors[index % colors.length]
+      ),
+      emails: emailsWithBreaches.map((email) => email.email),
+    };
+  }, [monitoredEmails]);
+
+  const pieChartData: ChartData<"pie"> | null = useMemo(() => {
+    if (!breachBreakdown) return null;
+
+    return {
+      labels: breachBreakdown.labels,
+      datasets: [
+        {
+          data: breachBreakdown.data,
+          backgroundColor: breachBreakdown.colors.map((c) => `${c}80`),
+          borderColor: breachBreakdown.colors,
+          borderWidth: 2,
+        },
+      ],
+    };
+  }, [breachBreakdown]);
   return (
     <div className="relative rounded-2xl border border-[#D4AF37]/35 bg-gradient-to-b from-[#050505] to-[#020202] px-6 py-7 overflow-hidden">
       {/* Animated wavy background */}
@@ -91,49 +162,119 @@ const BreachSummarySection: React.FC = () => {
             Breach Summary
           </h2>
 
-          {/* No exposures found — moved slightly DOWN */}
-          <p className="text-lg md:text-2xl font-semibold text-gray-50 mb-4 mt-6">
-            No exposures found
-          </p>
+          {/* Dynamic content based on breach status */}
+          {isBreached ? (
+            <>
+              <p className="text-lg md:text-2xl font-semibold text-gray-50 mb-4 mt-6">
+                {totalExposures}{" "}
+                {totalExposures === 1 ? "exposure" : "exposures"} found
+              </p>
+              <p className="text-sm md:text-base text-gray-400 leading-relaxed">
+                We found your monitored email addresses in {totalExposures}{" "}
+                {totalExposures === 1
+                  ? "known data breach"
+                  : "known data breaches"}
+                . Review the details below and take recommended actions to
+                secure your account.
+              </p>
+              {breachBreakdown && breachBreakdown.emails.length > 1 && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Breaches detected across {breachBreakdown.emails.length} email
+                  {breachBreakdown.emails.length > 1 ? "s" : ""}. See breakdown
+                  in chart.
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-lg md:text-2xl font-semibold text-gray-50 mb-4 mt-6">
+                No exposures found
+              </p>
+              <p className="text-sm md:text-base text-gray-400 leading-relaxed">
+                Great news! We checked your monitored email address against
+                known breach sources and found{" "}
+                <span className="text-[#7ee27f] font-semibold">
+                  no active leaks
+                </span>
+                . BreachEye will keep watching and alert you if your email
+                appears in a future breach.
+              </p>
+            </>
+          )}
 
-          {/* Paragraph — normal spacing, not squeezed */}
-          <p className="text-sm md:text-base text-gray-400 leading-relaxed">
-            Great news! We checked your monitored email address against known
-            breach sources and found{" "}
-            <span className="text-[#7ee27f] font-semibold">
-              no active leaks
-            </span>
-            . BreachEye will keep watching and alert you if your email appears
-            in a future breach.
-          </p>
-
-          <button className="mt-5 inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-medium bg-[#D4AF37] text-black hover:bg-[#f3d46f] transition">
+          <Link
+            href="/settings/manageEmailAccounts"
+            className="mt-5 inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-medium bg-[#D4AF37] text-black hover:bg-[#f3d46f] transition"
+          >
             Monitor more emails
-          </button>
+          </Link>
         </div>
 
-        {/* Right: donut visual */}
+        {/* Right: donut visual or pie chart */}
         <div className="flex flex-col items-center justify-center w-full md:w-64">
-          <div className="relative h-40 w-40 md:h-48 md:w-48 flex items-center justify-center">
-            {/* Outer gold ring */}
-            <div
-              className="h-full w-full rounded-full opacity-90 shadow-[0_0_24px_rgba(212,175,55,0.45)]"
-              style={{
-                background:
-                  "conic-gradient(from 140deg, #D4AF37, #f6e39a, #B99332, #D4AF37)",
-              }}
-            />
-
-            {/* Inner circle */}
-            <div className="absolute h-28 w-28 md:h-32 md:w-32 rounded-full bg-[#050505] border border-[#D4AF37]/40 flex flex-col items-center justify-center">
-              <span className="text-3xl font-semibold text-gray-50">
-                {totalExposures}
-              </span>
-              <span className="text-xs uppercase tracking-wide text-gray-400 mt-1">
-                Exposures
-              </span>
+          {pieChartData &&
+          breachBreakdown &&
+          breachBreakdown.emails.length > 1 ? (
+            // Show pie chart if multiple emails have breaches
+            <div className="w-full max-w-[200px]">
+              <Pie
+                data={pieChartData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: true,
+                  plugins: {
+                    legend: {
+                      position: "bottom",
+                      labels: {
+                        color: "#a1a1aa",
+                        font: { size: 10 },
+                        padding: 8,
+                      },
+                    },
+                    tooltip: {
+                      backgroundColor: "#050505",
+                      titleColor: "#f4f4f5",
+                      bodyColor: "#d4d4d8",
+                      borderColor: "rgba(212, 175, 55, 0.35)",
+                      borderWidth: 1,
+                      callbacks: {
+                        label: (context) => {
+                          const label =
+                            breachBreakdown.emails[context.dataIndex];
+                          const value = context.parsed;
+                          return `${label}: ${value} breach${
+                            value !== 1 ? "es" : ""
+                          }`;
+                        },
+                      },
+                    },
+                  },
+                }}
+              />
             </div>
-          </div>
+          ) : (
+            // Show donut chart for single email or no breakdown
+            <div className="relative h-40 w-40 md:h-48 md:w-48 flex items-center justify-center">
+              {/* Outer gold ring */}
+              <div
+                className="h-full w-full rounded-full opacity-90 shadow-[0_0_24px_rgba(212,175,55,0.45)]"
+                style={{
+                  background:
+                    "conic-gradient(from 140deg, #D4AF37, #f6e39a, #B99332, #D4AF37)",
+                }}
+              />
+
+              {/* Inner circle */}
+              <div className="absolute h-28 w-28 md:h-32 md:w-32 rounded-full bg-[#050505] border border-[#D4AF37]/40 flex flex-col items-center justify-center">
+                <span className="text-3xl font-semibold text-gray-50">
+                  {totalExposures}
+                </span>
+                <span className="text-xs uppercase tracking-wide text-gray-400 mt-1">
+                  Exposures
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

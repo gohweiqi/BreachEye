@@ -28,10 +28,10 @@ const NotificationsPage: React.FC = () => {
       enabled: true,
     },
     {
-      id: "weekly-summary",
-      label: "Weekly Summary",
+      id: "monthly-summary",
+      label: "Monthly Summary",
       description:
-        "Receive a weekly summary of all monitored emails and their status",
+        "Receive a monthly summary of all monitored emails and their status",
       enabled: false,
     },
     {

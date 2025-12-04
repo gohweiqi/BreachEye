@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
     CHECK: `${API_BASE_URL}/api/breach/check`,
     ANALYTICS: `${API_BASE_URL}/api/breach/analytics`,
   },
+  EMAILS: `${API_BASE_URL}/api/emails`,
   HEALTH: `${API_BASE_URL}/health`,
 };
 

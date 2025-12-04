@@ -19,10 +19,11 @@ const Navbar: React.FC = () => {
     normalizedPath.startsWith("/dashboard") ||
     normalizedPath.startsWith("/notifications") ||
     normalizedPath.startsWith("/settings");
+  const isAboutUsPage = normalizedPath === "/aboutUs";
 
-  // Show button on landing page (always) and on dashboard pages when authenticated
+  // Show button on landing page (always), about us page (always), and on dashboard pages when authenticated
   const shouldShowButton =
-    isLandingPage || (isDashboardPage && isAuthenticated);
+    isLandingPage || isAboutUsPage || (isDashboardPage && isAuthenticated);
 
   const buttonLabel = isLoading
     ? "Loading..."
@@ -148,7 +149,7 @@ const Navbar: React.FC = () => {
 
         {/* About Us */}
         <Link
-          href="#about-us"
+          href="/aboutUs"
           className="text-gray-300 hover:text-[#D4AF37] transition-colors duration-200 cursor-pointer"
         >
           About Us

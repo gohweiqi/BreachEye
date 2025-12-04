@@ -292,7 +292,7 @@ export default function EmailCheckSection({
 
                   {/* Call to Action */}
                   <div className="pt-4 flex items-center justify-between gap-4">
-                    <p className="text-sm text-gray-400 flex-1">
+                    <p className="text-sm text-gray-400 flex-1 text-left">
                       Stay protected. Get notified when your email appears in
                       future data breaches.
                     </p>

@@ -1,43 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../../../../components/Navbar";
 import Sidebar from "../../dashboard/components/Sidebar";
 import { useSession } from "next-auth/react";
-
-interface MonitoredEmail {
-  id: string;
-  email: string;
-  status: "safe" | "breached";
-  breaches: number;
-  addedDate: string;
-}
+import {
+  getMonitoredEmails,
+  addMonitoredEmail,
+  deleteMonitoredEmail,
+  MonitoredEmail,
+} from "@/lib/api/emailApi";
 
 const ManageEmailAccountsPage: React.FC = () => {
-  const { data: session } = useSession();
-  const [emails, setEmails] = useState<MonitoredEmail[]>([
-    {
-      id: "1",
-      email: session?.user?.email || "user@example.com",
-      status: "safe",
-      breaches: 0,
-      addedDate: "January 15, 2024",
-    },
-    {
-      id: "2",
-      email: "work@company.com",
-      status: "breached",
-      breaches: 2,
-      addedDate: "January 20, 2024",
-    },
-    {
-      id: "3",
-      email: "personal@email.com",
-      status: "safe",
-      breaches: 0,
-      addedDate: "February 1, 2024",
-    },
-  ]);
+  const { data: session, status: sessionStatus } = useSession();
+  const [emails, setEmails] = useState<MonitoredEmail[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [newEmail, setNewEmail] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -48,6 +25,45 @@ const ManageEmailAccountsPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [successEmail, setSuccessEmail] = useState("");
+
+  // Load emails function
+  const loadEmails = async () => {
+    if (!session?.user?.email) {
+      console.log("No session or email found");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const userId = session.user.email; // Using email as userId
+      console.log("Fetching emails for user:", userId);
+      const fetchedEmails = await getMonitoredEmails(userId);
+      console.log("Fetched emails:", fetchedEmails);
+      setEmails(fetchedEmails);
+    } catch (error) {
+      console.error("Error loading emails:", error);
+      // Silently handle errors - don't show error banner
+      setEmails([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load emails from API on mount and when session changes
+  useEffect(() => {
+    // Wait for session to be loaded
+    if (sessionStatus === "loading") {
+      return;
+    }
+
+    // Only load if session is available
+    if (session?.user?.email) {
+      loadEmails();
+    } else {
+      setIsLoading(false);
+    }
+  }, [session, sessionStatus]);
 
   // Email validation function
   const validateEmail = (email: string): boolean => {
@@ -73,45 +89,79 @@ const ManageEmailAccountsPage: React.FC = () => {
       return;
     }
 
+    if (!session?.user?.email) {
+      setEmailError("Please sign in to add emails.");
+      return;
+    }
+
     setEmailError("");
     setIsAdding(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const userId = session.user.email; // Using email as userId
+      const emailToAdd = newEmail.trim();
 
-    const newEmailEntry: MonitoredEmail = {
-      id: Date.now().toString(),
-      email: newEmail.trim(),
-      status: "safe",
-      breaches: 0,
-      addedDate: new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }),
-    };
+      // Call backend API to add email (backend will check for breaches)
+      const newEmailEntry = await addMonitoredEmail(userId, emailToAdd);
 
-    setEmails([...emails, newEmailEntry]);
-    setNewEmail("");
-    setIsAdding(false);
+      // Update state
+      setEmails([...emails, newEmailEntry]);
+      setNewEmail("");
 
-    // Show success notification
-    setSuccessEmail(newEmailEntry.email);
-    setShowSuccessNotification(true);
+      // Show success notification
+      setSuccessEmail(newEmailEntry.email);
+      setShowSuccessNotification(true);
 
-    // Auto-hide notification after 3 seconds
-    setTimeout(() => {
-      setShowSuccessNotification(false);
-    }, 3000);
+      // Auto-hide notification after 3 seconds
+      setTimeout(() => {
+        setShowSuccessNotification(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error adding email:", error);
+      setEmailError(
+        error instanceof Error
+          ? error.message
+          : "Failed to add email. Please try again."
+      );
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   const handleDeleteEmail = async (id: string) => {
+    if (!session?.user?.email) {
+      return;
+    }
+
+    // Find the email to be deleted
+    const emailToDelete = emails.find((e) => e.id === id);
+
+    // Prevent deletion of the signed-in Google account
+    if (
+      emailToDelete &&
+      emailToDelete.email.toLowerCase() === session.user.email.toLowerCase()
+    ) {
+      alert(
+        "Cannot remove your signed-in Google account. This is your primary account."
+      );
+      setShowDeleteConfirm(null);
+      return;
+    }
+
     setIsDeleting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setEmails(emails.filter((e) => e.id !== id));
-    setIsDeleting(false);
-    setShowDeleteConfirm(null);
+    try {
+      const userId = session.user.email; // Using email as userId
+      // Remove from API
+      await deleteMonitoredEmail(userId, id);
+      // Update state
+      setEmails(emails.filter((e) => e.id !== id));
+    } catch (error) {
+      console.error("Error deleting email:", error);
+      // Silently handle errors - don't show error banner
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(null);
+    }
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,19 +249,22 @@ const ManageEmailAccountsPage: React.FC = () => {
 
             {/* Monitored Emails List Section */}
             <div className="rounded-2xl border border-[#D4AF37]/35 bg-gradient-to-b from-[#050505] to-[#020202] px-6 py-7">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-3xl md:text-3xl font-bold uppercase text-[#bfa76f] tracking-[0.12em]">
-                    Monitored Email Addresses
-                  </h2>
-                  <p className="text-sm text-gray-400 mt-2">
-                    {emails.length} email{emails.length !== 1 ? "s" : ""} being
-                    monitored
-                  </p>
-                </div>
+              <div className="mb-6">
+                <h2 className="text-3xl md:text-3xl font-bold uppercase text-[#bfa76f] tracking-[0.12em]">
+                  Monitored Email Addresses
+                </h2>
+                <p className="text-sm text-gray-400 mt-2">
+                  {emails.length} email{emails.length !== 1 ? "s" : ""} being
+                  monitored
+                </p>
               </div>
 
-              {emails.length === 0 ? (
+              {isLoading ? (
+                <div className="text-center py-12">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#D4AF37] border-r-transparent"></div>
+                  <p className="mt-4 text-gray-400">Loading emails...</p>
+                </div>
+              ) : emails.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="mb-4">
                     <svg
@@ -237,59 +290,88 @@ const ManageEmailAccountsPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {emails.map((email) => (
-                    <div
-                      key={email.id}
-                      className="p-5 rounded-lg border border-[#D4AF37]/20 bg-[#0a0a0a]/50 hover:border-[#D4AF37]/40 transition-all"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        {/* Email Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h3 className="text-lg font-semibold text-gray-50 truncate">
-                              {email.email}
-                            </h3>
-                            {getStatusBadge(email.status)}
+                  {emails.map((email) => {
+                    const isPrimaryEmail =
+                      session?.user?.email &&
+                      email.email.toLowerCase() ===
+                        session.user.email.toLowerCase();
+
+                    return (
+                      <div
+                        key={email.id}
+                        className="p-5 rounded-lg border border-[#D4AF37]/20 bg-[#0a0a0a]/50 hover:border-[#D4AF37]/40 transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          {/* Email Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                              <h3 className="text-lg font-semibold text-gray-50 truncate">
+                                {email.email}
+                              </h3>
+                              {isPrimaryEmail && (
+                                <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40">
+                                  Primary Account
+                                </span>
+                              )}
+                              {getStatusBadge(email.status)}
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                              <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                                  Breaches Found
+                                </p>
+                                <p
+                                  className={`text-base font-medium ${
+                                    email.breaches > 0
+                                      ? "text-red-400"
+                                      : "text-green-400"
+                                  }`}
+                                >
+                                  {email.breaches}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                                  Added Date
+                                </p>
+                                <p className="text-sm text-gray-300">
+                                  {new Date(email.addedDate).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    }
+                                  )}
+                                </p>
+                              </div>
+                            </div>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                            <div>
-                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                                Breaches Found
-                              </p>
-                              <p
-                                className={`text-base font-medium ${
-                                  email.breaches > 0
-                                    ? "text-red-400"
-                                    : "text-green-400"
-                                }`}
+                          {/* Actions */}
+                          <div className="flex-shrink-0 flex items-center gap-2">
+                            {isPrimaryEmail ? (
+                              <button
+                                disabled
+                                className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-700/30 text-gray-500 border border-gray-700/50 cursor-not-allowed"
+                                title="Cannot remove your signed-in Google account"
                               >
-                                {email.breaches}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                                Added Date
-                              </p>
-                              <p className="text-sm text-gray-300">
-                                {email.addedDate}
-                              </p>
-                            </div>
+                                Remove
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => setShowDeleteConfirm(email.id)}
+                                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition border border-red-500/40"
+                              >
+                                Remove
+                              </button>
+                            )}
                           </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex-shrink-0 flex items-center gap-2">
-                          <button
-                            onClick={() => setShowDeleteConfirm(email.id)}
-                            className="px-4 py-2 rounded-lg text-sm font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 transition border border-red-500/40"
-                          >
-                            Remove
-                          </button>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

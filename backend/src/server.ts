@@ -4,6 +4,8 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import breachRoutes from "./routes/breachRoutes";
+import emailRoutes from "./routes/emailRoutes";
+import { connectDatabase } from "./config/database";
 
 // Load environment variables
 dotenv.config();
@@ -17,7 +19,7 @@ const corsOptions = {
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "user-id"], // Added user-id header
 };
 app.use(cors(corsOptions)); // Enable CORS for frontend
 
@@ -53,6 +55,7 @@ app.get("/health", (req: Request, res: Response) => {
 
 // API Routes
 app.use("/api/breach", breachRoutes);
+app.use("/api/emails", emailRoutes);
 
 // 404 handler
 app.use("*", (req: Request, res: Response) => {
@@ -75,12 +78,28 @@ app.use(
 );
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
-  console.log(`📚 API Documentation: http://localhost:${PORT}/health`);
-  console.log(
-    `🔍 Breach Check API: http://localhost:${PORT}/api/breach/check/:email`
-  );
-});
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await connectDatabase();
+
+    // Start Express server
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on http://localhost:${PORT}`);
+      console.log(`📚 API Documentation: http://localhost:${PORT}/health`);
+      console.log(
+        `🔍 Breach Check API: http://localhost:${PORT}/api/breach/check/:email`
+      );
+      console.log(
+        `📧 Email Management API: http://localhost:${PORT}/api/emails`
+      );
+    });
+  } catch (error) {
+    console.error("❌ Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;

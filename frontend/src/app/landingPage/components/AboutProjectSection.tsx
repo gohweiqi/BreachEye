@@ -1,9 +1,9 @@
 "use client";
 
-export default function AboutUsSection() {
+export default function AboutProjectSection() {
   return (
     <section
-      id="about-us"
+      id="about-project"
       className="w-full max-w-6xl mt-10 mb-24 mx-auto rounded-2xl border border-[#D4AF37]/30 bg-gradient-to-b from-[#0b0b0b] to-[#000000] p-8 sm:p-12 text-gray-200"
     >
       {/* Header */}
@@ -83,7 +83,7 @@ export default function AboutUsSection() {
 
       {/* Footer */}
       <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-sm text-gray-400 max-w-2xl">
+        <p className="text-sm text-gray-400 w-full">
           This system is developed as part of a Final Year Project to make email
           breach information more visible, understandable, and actionable for
           everyday users.
