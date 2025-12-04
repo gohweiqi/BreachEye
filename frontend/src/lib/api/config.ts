@@ -11,6 +11,9 @@ export const API_ENDPOINTS = {
     ANALYTICS: `${API_BASE_URL}/api/breach/analytics`,
   },
   EMAILS: `${API_BASE_URL}/api/emails`,
+  USER: {
+    ACCOUNT: `${API_BASE_URL}/api/user/account`,
+  },
   HEALTH: `${API_BASE_URL}/health`,
 };
 

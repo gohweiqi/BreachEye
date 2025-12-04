@@ -1,46 +1,79 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../../../../components/Navbar";
 import Sidebar from "../../dashboard/components/Sidebar";
 import { useSession, signOut } from "next-auth/react";
+import {
+  getUserAccountData,
+  deleteUserAccount,
+  UserAccountData,
+} from "@/lib/api/userApi";
 
 const ManageAccountPage: React.FC = () => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const user = session?.user;
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showExportConfirm, setShowExportConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [accountData, setAccountData] = useState<UserAccountData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock account data - in production, this would come from your backend
-  const accountData = {
-    joinedDate: "January 15, 2024",
-    accountStatus: "Active",
-    lastLogin: "2 hours ago",
-    totalBreaches: 3,
-    monitoredEmails: 5,
-  };
+  // Fetch user account data
+  useEffect(() => {
+    const loadAccountData = async () => {
+      if (status === "loading" || status === "unauthenticated") {
+        setIsLoading(false);
+        return;
+      }
+
+      const userEmail = session?.user?.email;
+      if (!userEmail) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getUserAccountData(userEmail);
+        setAccountData(data);
+      } catch (err) {
+        console.error("Error loading account data:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to load account data"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAccountData();
+  }, [session, status]);
 
   const handleDeleteAccount = async () => {
+    if (!session?.user?.email) {
+      return;
+    }
+
     setIsDeleting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsDeleting(false);
-    setShowDeleteConfirm(false);
-
-    // Sign out and navigate to landing page with success flag
-    await signOut({ callbackUrl: "/?accountDeleted=true" });
-  };
-
-  const handleExportData = async () => {
-    setIsExporting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsExporting(false);
-    setShowExportConfirm(false);
-    // In production, trigger data export download
+    try {
+      const userId = session.user.email;
+      await deleteUserAccount(userId);
+      
+      // Account deleted successfully, sign out and navigate to landing page
+      await signOut({ callbackUrl: "/?accountDeleted=true" });
+    } catch (err) {
+      console.error("Error deleting account:", err);
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Failed to delete account. Please try again."
+      );
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
   };
 
   return (
@@ -67,57 +100,103 @@ const ManageAccountPage: React.FC = () => {
                 Manage your account profile and personal information.
               </p>
 
-              <div className="space-y-6">
-                {/* Profile Picture and Basic Info */}
-                <div className="flex items-center gap-6 p-4 rounded-lg border border-[#D4AF37]/20 bg-[#0a0a0a]/50">
-                  <div className="flex-shrink-0">
-                    {user?.image ? (
-                      <img
-                        src={user.image}
-                        alt="Profile"
-                        className="w-20 h-20 rounded-full border-2 border-[#D4AF37]/50"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-full border-2 border-[#D4AF37]/50 bg-[#0a0a0a] flex items-center justify-center">
-                        <span className="text-2xl font-bold text-[#D4AF37]">
-                          {user?.name?.charAt(0).toUpperCase() ||
-                            user?.email?.charAt(0).toUpperCase() ||
-                            "U"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-50 mb-1">
-                      {user?.name || "User Name"}
-                    </h3>
-                    <p className="text-sm text-gray-400">
-                      {user?.email || "user@example.com"}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">Google Account</p>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#D4AF37] border-r-transparent"></div>
+                    <p className="mt-4 text-gray-400">Loading account data...</p>
                   </div>
                 </div>
+              ) : error ? (
+                <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4">
+                  <p className="text-red-400">Error: {error}</p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Please try refreshing the page.
+                  </p>
+                </div>
+              ) : accountData ? (
+                <div className="space-y-6">
+                  {/* Profile Picture and Basic Info */}
+                  <div className="flex items-center gap-6 p-4 rounded-lg border border-[#D4AF37]/20 bg-[#0a0a0a]/50">
+                    <div className="flex-shrink-0">
+                      {user?.image ? (
+                        <img
+                          src={user.image}
+                          alt="Profile"
+                          className="w-20 h-20 rounded-full border-2 border-[#D4AF37]/50"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-full border-2 border-[#D4AF37]/50 bg-[#0a0a0a] flex items-center justify-center">
+                          <span className="text-2xl font-bold text-[#D4AF37]">
+                            {user?.name?.charAt(0).toUpperCase() ||
+                              user?.email?.charAt(0).toUpperCase() ||
+                              "U"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-50 mb-1">
+                        {user?.name || "User Name"}
+                      </h3>
+                      <p className="text-sm text-gray-400">
+                        {user?.email || "user@example.com"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Google Account</p>
+                    </div>
+                  </div>
 
-                {/* Account Details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-lg border border-[#D4AF37]/20 bg-[#0a0a0a]/50">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                      Joined Date
-                    </p>
-                    <p className="text-base font-medium text-gray-50">
-                      {accountData.joinedDate}
-                    </p>
-                  </div>
-                  <div className="p-4 rounded-lg border border-[#D4AF37]/20 bg-[#0a0a0a]/50">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                      Monitored Emails
-                    </p>
-                    <p className="text-base font-medium text-gray-50">
-                      {accountData.monitoredEmails} addresses
-                    </p>
+                  {/* Account Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg border border-[#D4AF37]/20 bg-[#0a0a0a]/50">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                        Joined Date
+                      </p>
+                      <p className="text-base font-medium text-gray-50">
+                        {new Date(accountData.joinedDate).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg border border-[#D4AF37]/20 bg-[#0a0a0a]/50">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                        Monitored Emails
+                      </p>
+                      <p className="text-base font-medium text-gray-50">
+                        {accountData.monitoredEmails} address
+                        {accountData.monitoredEmails !== 1 ? "es" : ""}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg border border-[#D4AF37]/20 bg-[#0a0a0a]/50">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                        Account Status
+                      </p>
+                      <p className="text-base font-medium text-green-400">
+                        {accountData.accountStatus}
+                      </p>
+                    </div>
+                    <div className="p-4 rounded-lg border border-[#D4AF37]/20 bg-[#0a0a0a]/50">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                        Total Breaches
+                      </p>
+                      <p
+                        className={`text-base font-medium ${
+                          accountData.totalBreaches > 0
+                            ? "text-red-400"
+                            : "text-green-400"
+                        }`}
+                      >
+                        {accountData.totalBreaches}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
             </div>
 
             {/* Data Management Section */}

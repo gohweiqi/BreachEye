@@ -5,13 +5,14 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import breachRoutes from "./routes/breachRoutes";
 import emailRoutes from "./routes/emailRoutes";
+import userRoutes from "./routes/userRoutes";
 import { connectDatabase } from "./config/database";
 
 // Load environment variables
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT || "5000", 10);
 
 // CORS configuration - must be before other middleware
 const corsOptions = {
@@ -56,6 +57,7 @@ app.get("/health", (req: Request, res: Response) => {
 // API Routes
 app.use("/api/breach", breachRoutes);
 app.use("/api/emails", emailRoutes);
+app.use("/api/user", userRoutes);
 
 // 404 handler
 app.use("*", (req: Request, res: Response) => {
@@ -84,18 +86,16 @@ const startServer = async () => {
     await connectDatabase();
 
     // Start Express server
-    app.listen(PORT, () => {
-      console.log(`🚀 Server is running on http://localhost:${PORT}`);
-      console.log(`📚 API Documentation: http://localhost:${PORT}/health`);
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+      console.log(`API Documentation: http://localhost:${PORT}/health`);
       console.log(
-        `🔍 Breach Check API: http://localhost:${PORT}/api/breach/check/:email`
+        `Breach Check API: http://localhost:${PORT}/api/breach/check/:email`
       );
-      console.log(
-        `📧 Email Management API: http://localhost:${PORT}/api/emails`
-      );
+      console.log(`Email Management API: http://localhost:${PORT}/api/emails`);
     });
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    console.error("Failed to start server:", error);
     process.exit(1);
   }
 };
