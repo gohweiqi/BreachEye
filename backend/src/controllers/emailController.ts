@@ -6,6 +6,7 @@
 import { Request, Response } from "express";
 import Email, { IEmail } from "../models/Email";
 import { XposedOrNotService } from "../services/xposedOrNotService";
+import { createNotificationWithEmail } from "./notificationController";
 
 /**
  * Get all monitored emails for a user
@@ -194,6 +195,33 @@ export const getEmails = async (req: Request, res: Response): Promise<void> => {
             breachData,
             lastChecked: new Date(),
           });
+
+          // Create notification if breaches were detected
+          if (breaches > 0 && breachData) {
+            try {
+              const breachNames = breachData.breaches
+                ? (breachData.breaches as any[])
+                    .map((b: any) => b.name || "Unknown Breach")
+                    .slice(0, 5)
+                : [];
+
+              await createNotificationWithEmail(
+                userId,
+                "breach",
+                "New breach detected",
+                `Your email was found in ${breaches} data breach${
+                  breaches > 1 ? "es" : ""
+                }`,
+                {
+                  email: signedInEmail,
+                  breachCount: breaches,
+                  breachNames: breachNames,
+                }
+              );
+            } catch (error) {
+              console.error("Error creating breach notification:", error);
+            }
+          }
         } catch (error) {
           console.warn(
             `⚠️  Error checking breaches for signed-in email ${signedInEmail}: ${
@@ -495,6 +523,34 @@ export const addEmail = async (req: Request, res: Response): Promise<void> => {
     });
 
     await newEmail.save();
+
+    // Create notification if breaches were detected
+    if (breaches > 0 && breachData) {
+      try {
+        const breachNames = breachData.breaches
+          ? (breachData.breaches as any[])
+              .map((b: any) => b.name || "Unknown Breach")
+              .slice(0, 5)
+          : [];
+
+        await createNotificationWithEmail(
+          userId,
+          "breach",
+          "New breach detected",
+          `Your email was found in ${breaches} data breach${
+            breaches > 1 ? "es" : ""
+          }`,
+          {
+            email: email.toLowerCase().trim(),
+            breachCount: breaches,
+            breachNames: breachNames,
+          }
+        );
+      } catch (error) {
+        console.error("Error creating breach notification:", error);
+        // Don't fail the request if notification creation fails
+      }
+    }
 
     res.status(201).json({
       success: true,
@@ -804,13 +860,46 @@ export const checkEmail = async (
       pastes: analytics.PastesSummary,
     };
 
+    // Check if this is a new breach detection (breaches increased)
+    const previousBreachCount = email.breaches || 0;
+    const newBreachCount = breachDetails.length;
+    const isNewBreach = newBreachCount > previousBreachCount;
+
     // Update email document
     email.breachData = breachData;
-    email.breaches = breachDetails.length;
-    email.status = breachDetails.length > 0 ? "breached" : "safe";
+    email.breaches = newBreachCount;
+    email.status = newBreachCount > 0 ? "breached" : "safe";
     email.lastChecked = new Date();
 
     await email.save();
+
+    // Create notification if new breaches were detected or if this is the first check with breaches
+    if (isNewBreach && newBreachCount > 0 && breachData) {
+      try {
+        const breachNames = breachData.breaches
+          ? (breachData.breaches as any[])
+              .map((b: any) => b.name || "Unknown Breach")
+              .slice(0, 5)
+          : [];
+
+        await createNotificationWithEmail(
+          userId,
+          "breach",
+          "New breach detected",
+          `Your email was found in ${newBreachCount} data breach${
+            newBreachCount > 1 ? "es" : ""
+          }`,
+          {
+            email: email.email,
+            breachCount: newBreachCount,
+            breachNames: breachNames,
+          }
+        );
+      } catch (error) {
+        console.error("Error creating breach notification:", error);
+        // Don't fail the request if notification creation fails
+      }
+    }
 
     res.status(200).json({
       success: true,

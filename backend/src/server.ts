@@ -6,10 +6,17 @@ import dotenv from "dotenv";
 import breachRoutes from "./routes/breachRoutes";
 import emailRoutes from "./routes/emailRoutes";
 import userRoutes from "./routes/userRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
+import notificationSettingsRoutes from "./routes/notificationSettingsRoutes";
+import monthlySummaryRoutes from "./routes/monthlySummaryRoutes";
+import newsRoutes from "./routes/newsRoutes";
 import { connectDatabase } from "./config/database";
+import { initializeMonthlySummaryScheduler } from "./services/monthlySummaryScheduler";
 
-// Load environment variables
+// Load environment variables (supports .env.local for local development)
 dotenv.config();
+// Also try loading .env.local (higher priority, typically gitignored)
+dotenv.config({ path: ".env.local", override: false });
 
 const app: Application = express();
 const PORT = parseInt(process.env.PORT || "5000", 10);
@@ -58,6 +65,10 @@ app.get("/health", (req: Request, res: Response) => {
 app.use("/api/breach", breachRoutes);
 app.use("/api/emails", emailRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/notification-settings", notificationSettingsRoutes);
+app.use("/api/monthly-summary", monthlySummaryRoutes);
+app.use("/api/news", newsRoutes);
 
 // 404 handler
 app.use("*", (req: Request, res: Response) => {
@@ -84,6 +95,9 @@ const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDatabase();
+
+    // Initialize monthly summary scheduler
+    initializeMonthlySummaryScheduler();
 
     // Start Express server
     app.listen(PORT, "0.0.0.0", () => {

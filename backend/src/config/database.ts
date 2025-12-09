@@ -7,6 +7,8 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 
 dotenv.config();
+// Also try loading .env.local
+dotenv.config({ path: ".env.local", override: false });
 
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/breacheye";

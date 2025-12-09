@@ -1,83 +1,112 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import Navbar from "../../../components/Navbar";
 import Sidebar from "../../app/dashboard/components/Sidebar";
-
-interface Notification {
-  id: number;
-  type: "breach" | "summary" | "security" | "system";
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-}
+import {
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  Notification,
+} from "@/lib/api/notificationApi";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const NotificationsListPage: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      type: "breach",
-      title: "New breach detected",
-      message: "Your email was found in the 'CompanyXYZ' data breach",
-      time: "2 hours ago",
-      read: false,
-    },
-    {
-      id: 2,
-      type: "security",
-      title: "Security recommendation",
-      message:
-        "We suggest enabling two-factor authentication for better protection.",
-      time: "1 day ago",
-      read: false,
-    },
-    {
-      id: 3,
-      type: "summary",
-      title: "Monthly summary",
-      message: "All monitored emails are secure this month",
-      time: "3 days ago",
-      read: true,
-    },
-    {
-      id: 4,
-      type: "security",
-      title: "Security recommendation",
-      message: "Consider enabling two-factor authentication",
-      time: "1 week ago",
-      read: true,
-    },
-    {
-      id: 6,
-      type: "summary",
-      title: "Monitoring update",
-      message: "Your email was re-scanned with the latest breach database.",
-      time: "2 weeks ago",
-      read: true,
-    },
-    {
-      id: 7,
-      type: "system",
-      title: "BreachEye engine updated",
-      message: "We improved our scanning engine. Detection accuracy increased.",
-      time: "12 hours ago",
-      read: true,
-    },
-  ]);
+  const { data: session, status: sessionStatus } = useSession();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { markAsRead: markAsReadContext, refreshNotifications: refreshContextNotifications } = useNotifications();
 
-  const markAllAsRead = () => {
-    setNotifications((prev) =>
-      prev.map((notification) => ({ ...notification, read: true }))
-    );
+  // Load notifications from API
+  const loadNotifications = useCallback(async () => {
+    if (sessionStatus === "loading" || !session?.user?.email) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      const userId = session.user.email;
+      const fetchedNotifications = await getNotifications(userId);
+      setNotifications(fetchedNotifications);
+    } catch (err) {
+      console.error("Error loading notifications:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to load notifications. Please try again later."
+      );
+      setNotifications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [session, sessionStatus]);
+
+  useEffect(() => {
+    if (sessionStatus === "loading") {
+      return;
+    }
+
+    if (!session?.user?.email) {
+      setIsLoading(false);
+      return;
+    }
+
+    loadNotifications();
+
+    // Refresh when page becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadNotifications();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [session, sessionStatus, loadNotifications]);
+
+  const markAllAsRead = async () => {
+    if (!session?.user?.email) return;
+
+    try {
+      const userId = session.user.email;
+      await markAllNotificationsAsRead(userId);
+      // Update local state optimistically
+      setNotifications((prev) =>
+        prev.map((notification) => ({ ...notification, read: true }))
+      );
+      // Refresh context to update sidebar dot
+      await refreshContextNotifications();
+    } catch (err) {
+      console.error("Error marking all as read:", err);
+      // Reload notifications on error
+      loadNotifications();
+    }
   };
 
-  const markAsRead = (id: number) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+  const markAsRead = async (id: string) => {
+    if (!session?.user?.email) return;
+
+    try {
+      const userId = session.user.email;
+      await markNotificationAsRead(userId, id);
+      // Update local state optimistically
+      setNotifications((prev) =>
+        prev.map((notification) =>
+          notification.id === id ? { ...notification, read: true } : notification
+        )
+      );
+      // Update context to update sidebar dot immediately
+      await markAsReadContext(id);
+    } catch (err) {
+      console.error("Error marking notification as read:", err);
+      // Reload notifications on error
+      loadNotifications();
+    }
   };
 
   return (
@@ -108,9 +137,30 @@ const NotificationsListPage: React.FC = () => {
                 </button>
               </div>
 
+              {/* Loading State */}
+              {isLoading && (
+                <div className="text-center py-12">
+                  <p className="text-gray-400">Loading notifications...</p>
+                </div>
+              )}
+
+              {/* Error State */}
+              {error && !isLoading && (
+                <div className="text-center py-12">
+                  <p className="text-red-400 mb-2">{error}</p>
+                  <button
+                    onClick={loadNotifications}
+                    className="text-sm text-[#D4AF37] hover:text-[#f3d46f] transition"
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
               {/* Notifications List */}
-              <div className="space-y-3">
-                {notifications.map((notification) => (
+              {!isLoading && !error && (
+                <div className="space-y-3">
+                  {notifications.map((notification) => (
                   <div
                     key={notification.id}
                     onClick={() => markAsRead(notification.id)}
@@ -143,11 +193,12 @@ const NotificationsListPage: React.FC = () => {
                       )}
                     </div>
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {/* Empty State (if no notifications) */}
-              {notifications.length === 0 && (
+              {!isLoading && !error && notifications.length === 0 && (
                 <div className="text-center py-12">
                   <p className="text-gray-400 mb-2">No notifications yet</p>
                   <p className="text-sm text-gray-500">

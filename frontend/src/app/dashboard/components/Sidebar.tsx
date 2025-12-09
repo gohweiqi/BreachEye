@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 type SidebarItemProps = {
   label: string;
@@ -34,6 +35,11 @@ const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const email = data?.user?.email ?? "user@example.com";
 
+  // Get unread count from notification context
+  // Note: This will throw an error if NotificationProvider is not in the component tree
+  // Make sure all pages using Sidebar have NotificationProvider in providers.tsx
+  const { unreadCount } = useNotifications();
+
   return (
     <aside className="w-64 flex-shrink-0 self-stretch rounded-2xl border border-[#D4AF37]/30 bg-gradient-to-b from-[#050505] to-[#020202] p-4 flex flex-col">
       {/* User info */}
@@ -50,10 +56,20 @@ const Sidebar: React.FC = () => {
             href="/dashboard"
             active={pathname === "/dashboard"}
           />
+          <div className="relative">
+            <SidebarItem
+              label="Notifications"
+              href="/notifications"
+              active={pathname === "/notifications"}
+            />
+            {unreadCount > 0 && (
+              <div className="absolute top-1/2 -translate-y-1/2 right-3 flex-shrink-0 w-2 h-2 rounded-full bg-[#D4AF37]"></div>
+            )}
+          </div>
           <SidebarItem
-            label="Notifications"
-            href="/notifications"
-            active={pathname === "/notifications"}
+            label="Monthly Summary"
+            href="/monthlySummary"
+            active={pathname === "/monthlySummary"}
           />
         </div>
 

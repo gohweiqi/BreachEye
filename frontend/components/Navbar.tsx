@@ -18,12 +18,13 @@ const Navbar: React.FC = () => {
   const isDashboardPage =
     normalizedPath.startsWith("/dashboard") ||
     normalizedPath.startsWith("/notifications") ||
-    normalizedPath.startsWith("/settings");
+    normalizedPath.startsWith("/settings") ||
+    normalizedPath.startsWith("/monthlySummary");
   const isAboutUsPage = normalizedPath === "/aboutUs";
+  const isNewsPage = normalizedPath === "/news";
 
-  // Show button on landing page (always), about us page (always), and on dashboard pages when authenticated
-  const shouldShowButton =
-    isLandingPage || isAboutUsPage || (isDashboardPage && isAuthenticated);
+  // Show button on ALL pages - always show sign in/log out button
+  const shouldShowButton = true;
 
   const buttonLabel = isLoading
     ? "Loading..."
@@ -141,7 +142,7 @@ const Navbar: React.FC = () => {
       <div className="flex items-center gap-6">
         {/* Latest News */}
         <Link
-          href="#latest-news"
+          href="/news"
           className="text-gray-300 hover:text-[#D4AF37] transition-colors duration-200 cursor-pointer"
         >
           Latest News

@@ -14,6 +14,13 @@ export const API_ENDPOINTS = {
   USER: {
     ACCOUNT: `${API_BASE_URL}/api/user/account`,
   },
+  NOTIFICATIONS: `${API_BASE_URL}/api/notifications`,
+  NOTIFICATION_SETTINGS: `${API_BASE_URL}/api/notification-settings`,
+  NEWS: {
+    LATEST: `${API_BASE_URL}/api/news/latest`,
+    SEARCH: `${API_BASE_URL}/api/news/search`,
+  },
+  MONTHLY_SUMMARY: `${API_BASE_URL}/api/monthly-summary`,
   HEALTH: `${API_BASE_URL}/health`,
 };
 
