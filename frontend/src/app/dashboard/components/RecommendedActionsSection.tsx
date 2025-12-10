@@ -29,28 +29,43 @@ const RecommendedActionsSection: React.FC<RecommendedActionsSectionProps> = ({
 
           <ul className="text-gray-400 text-sm md:text-base space-y-3 pl-6 list-disc">
             <li>
-              <span className="font-semibold text-[#fb7185]">Change your password immediately</span>{" "}
-              for the affected service(s) and any accounts using the same password.
+              <span className="font-semibold text-[#fb7185]">
+                Change your password immediately
+              </span>{" "}
+              for the affected service(s) and any accounts using the same
+              password.
             </li>
             <li>
-              <span className="font-semibold text-[#fbbf24]">Enable multi-factor authentication (2FA)</span>{" "}
-              on all your important accounts, especially those related to the breached services.
+              <span className="font-semibold text-[#fbbf24]">
+                Enable multi-factor authentication (2FA)
+              </span>{" "}
+              on all your important accounts, especially those related to the
+              breached services.
             </li>
             <li>
-              <span className="font-semibold text-[#fbbf24]">Review your account activity</span>{" "}
+              <span className="font-semibold text-[#fbbf24]">
+                Review your account activity
+              </span>{" "}
               for any suspicious login attempts or unauthorized access.
             </li>
             <li>
-              <span className="font-semibold text-gray-300">Use a password manager</span>{" "}
+              <span className="font-semibold text-gray-300">
+                Use a password manager
+              </span>{" "}
               to generate and store unique, strong passwords for each account.
             </li>
             <li>
-              <span className="font-semibold text-gray-300">Monitor your financial accounts</span>{" "}
-              for any unauthorized transactions if payment information was exposed.
+              <span className="font-semibold text-gray-300">
+                Monitor your financial accounts
+              </span>{" "}
+              for any unauthorized transactions if payment information was
+              exposed.
             </li>
             <li>
               Consider using a{" "}
-              <span className="font-semibold text-gray-300">credit monitoring service</span>{" "}
+              <span className="font-semibold text-gray-300">
+                credit monitoring service
+              </span>{" "}
               if sensitive personal information was compromised.
             </li>
           </ul>
@@ -60,8 +75,8 @@ const RecommendedActionsSection: React.FC<RecommendedActionsSectionProps> = ({
           {/* No breaches - preventive actions */}
           <p className="text-sm md:text-base leading-relaxed max-w-2xl mb-6 italic">
             No exposures found for your monitored email — no fixes needed at the
-            moment. However, we suggest following these best practices to keep your
-            account protected.
+            moment. However, we suggest following these best practices to keep
+            your account protected.
           </p>
 
           <ul className="text-gray-400 text-sm md:text-base space-y-3 pl-6 list-disc">

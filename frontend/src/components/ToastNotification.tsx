@@ -83,7 +83,11 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({
       className={`
         fixed top-4 right-4 z-50 max-w-md w-full
         transform transition-all duration-300 ease-in-out
-        ${isVisible && !isLeaving ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
+        ${
+          isVisible && !isLeaving
+            ? "translate-x-0 opacity-100"
+            : "translate-x-full opacity-0"
+        }
       `}
     >
       <div
@@ -146,6 +150,3 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({
 };
 
 export default ToastNotification;
-
-
-

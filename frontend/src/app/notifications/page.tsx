@@ -17,7 +17,10 @@ const NotificationsListPage: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { markAsRead: markAsReadContext, refreshNotifications: refreshContextNotifications } = useNotifications();
+  const {
+    markAsRead: markAsReadContext,
+    refreshNotifications: refreshContextNotifications,
+  } = useNotifications();
 
   // Load notifications from API
   const loadNotifications = useCallback(async () => {
@@ -97,7 +100,9 @@ const NotificationsListPage: React.FC = () => {
       // Update local state optimistically
       setNotifications((prev) =>
         prev.map((notification) =>
-          notification.id === id ? { ...notification, read: true } : notification
+          notification.id === id
+            ? { ...notification, read: true }
+            : notification
         )
       );
       // Update context to update sidebar dot immediately
@@ -161,38 +166,40 @@ const NotificationsListPage: React.FC = () => {
               {!isLoading && !error && (
                 <div className="space-y-3">
                   {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    onClick={() => markAsRead(notification.id)}
-                    className={`p-4 rounded-lg border transition-all cursor-pointer ${
-                      notification.read
-                        ? "border-[#D4AF37]/20 bg-[#0a0a0a]/30"
-                        : "border-[#D4AF37]/40 bg-[#0a0a0a]/50 shadow-[0_0_12px_rgba(212,175,55,0.15)]"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <h3
-                          className={`text-base font-semibold mb-1 ${
-                            notification.read ? "text-gray-300" : "text-gray-50"
-                          }`}
-                        >
-                          {notification.title}
-                        </h3>
-                        <p className="text-sm text-gray-400 mb-2">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {notification.time}
-                        </p>
-                      </div>
+                    <div
+                      key={notification.id}
+                      onClick={() => markAsRead(notification.id)}
+                      className={`p-4 rounded-lg border transition-all cursor-pointer ${
+                        notification.read
+                          ? "border-[#D4AF37]/20 bg-[#0a0a0a]/30"
+                          : "border-[#D4AF37]/40 bg-[#0a0a0a]/50 shadow-[0_0_12px_rgba(212,175,55,0.15)]"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <h3
+                            className={`text-base font-semibold mb-1 ${
+                              notification.read
+                                ? "text-gray-300"
+                                : "text-gray-50"
+                            }`}
+                          >
+                            {notification.title}
+                          </h3>
+                          <p className="text-sm text-gray-400 mb-2">
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {notification.time}
+                          </p>
+                        </div>
 
-                      {!notification.read && (
-                        <div className="flex-shrink-0 w-2 h-2 rounded-full bg-[#D4AF37]"></div>
-                      )}
+                        {!notification.read && (
+                          <div className="flex-shrink-0 w-2 h-2 rounded-full bg-[#D4AF37]"></div>
+                        )}
+                      </div>
                     </div>
-                  </div>
                   ))}
                 </div>
               )}

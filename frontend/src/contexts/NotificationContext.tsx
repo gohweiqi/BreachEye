@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { useSession } from "next-auth/react";
 import { getNotifications, Notification } from "@/lib/api/notificationApi";
 import ToastNotification from "../components/ToastNotification";
@@ -13,12 +19,16 @@ interface NotificationContextType {
   markAsRead: (id: string) => Promise<void>;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+const NotificationContext = createContext<NotificationContextType | undefined>(
+  undefined
+);
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error("useNotifications must be used within NotificationProvider");
+    throw new Error(
+      "useNotifications must be used within NotificationProvider"
+    );
   }
   return context;
 };
@@ -30,7 +40,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toastQueue, setToastQueue] = useState<Notification[]>([]);
   const [currentToast, setCurrentToast] = useState<Notification | null>(null);
-  const [shownNotificationIds, setShownNotificationIds] = useState<Set<string>>(new Set());
+  const [shownNotificationIds, setShownNotificationIds] = useState<Set<string>>(
+    new Set()
+  );
 
   const loadNotifications = useCallback(async () => {
     if (sessionStatus === "loading" || !session?.user?.email) {
@@ -121,7 +133,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!session?.user?.email) return;
 
       try {
-        const { markNotificationAsRead } = await import("@/lib/api/notificationApi");
+        const { markNotificationAsRead } = await import(
+          "@/lib/api/notificationApi"
+        );
         await markNotificationAsRead(session.user.email, id);
         setNotifications((prev) =>
           prev.map((n) => (n.id === id ? { ...n, read: true } : n))
@@ -156,4 +170,3 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
     </NotificationContext.Provider>
   );
 };
-

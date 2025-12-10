@@ -52,5 +52,3 @@ const NotificationSettings = mongoose.model<INotificationSettings>(
 );
 
 export default NotificationSettings;
-
-
