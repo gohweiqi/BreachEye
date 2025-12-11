@@ -150,27 +150,11 @@ cd backend
 npm run dev
 ```
 
-You should see:
-
-```
-Server is running on http://localhost:5000
-API Documentation: http://localhost:5000/health
-Breach Check API: http://localhost:5000/api/breach/check/:email
-Email Management API: http://localhost:5000/api/emails
-```
-
 **Terminal 2 - Start Frontend Server:**
 
 ```bash
 cd frontend
 npm run dev
-```
-
-You should see:
-
-```
-✓ Ready in X.Xs
-○ Local:        http://localhost:3000
 ```
 
 #### 6. Access the Application
@@ -180,30 +164,6 @@ Open your browser and navigate to:
 ```
 http://localhost:3000
 ```
-
-## Development
-
-### Building for Production
-
-**Backend:**
-
-```bash
-cd backend
-npm run build
-npm start
-```
-
-**Frontend:**
-
-```bash
-cd frontend
-npm run build
-npm start
-```
-
-### Environment Variables
-
-Make sure to set up all required environment variables in both `backend/.env.local` and `frontend/.env.local` before running the application.
 
 ## License
 

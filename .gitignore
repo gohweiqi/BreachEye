@@ -12,7 +12,11 @@ build/
 # Environment files
 .env
 .env.*
+.env.local
+backend/.env
+backend/.env.local
 frontend/.env.local
+frontend/.env
 
 # Logs
 npm-debug.log*
