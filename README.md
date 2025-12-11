@@ -1,4 +1,4 @@
-# Email Breach Detection System
+# BreachEye - A Email Breach Detection System
 
 A comprehensive web-based system that enables users to monitor multiple email addresses for data breaches, visualize breach statistics, and receive real-time alerts. This project helps users stay informed about their email security and take proactive action before threats escalate.
 
