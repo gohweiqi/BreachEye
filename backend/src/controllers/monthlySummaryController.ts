@@ -114,7 +114,10 @@ export const getMonthlySummary = async (
       status: email.status,
       breaches: email.breaches || 0,
       lastChecked:
-        email.updatedAt?.toISOString() || email.createdAt?.toISOString(),
+        email.updatedAt?.toISOString() ||
+        email.lastChecked?.toISOString() ||
+        email.addedDate?.toISOString() ||
+        email.createdAt?.toISOString(),
     }));
 
     res.status(200).json({

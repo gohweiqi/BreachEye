@@ -12,6 +12,8 @@ export interface IEmail extends Document {
   breaches: number;
   addedDate: Date;
   lastChecked?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
   breachData?: any; // Store full breach analytics data
 }
 
