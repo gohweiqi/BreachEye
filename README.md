@@ -8,14 +8,14 @@ A comprehensive web-based system that enables users to monitor multiple email ad
 
 ### Key Features
 
-- ✅ Multi-email monitoring dashboard
-- ✅ Real-time breach checking and alerts
-- ✅ Risk score calculation based on breach data
-- ✅ Interactive breach history visualization
-- ✅ Email notification system (configurable)
-- ✅ Monthly security summary reports
-- ✅ Breach news feed integration
-- ✅ Responsive and modern UI design
+- Multi-email monitoring dashboard
+- Real-time breach checking and alerts
+- Risk score calculation based on breach data
+- Interactive breach history visualization
+- Email notification system (configurable)
+- Monthly security summary reports
+- Breach news feed integration
+- Responsive and modern UI design
 
 ## Technology Stack
 
