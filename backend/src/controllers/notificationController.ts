@@ -256,49 +256,57 @@ export const createNotificationWithEmail = async (
     breachNames?: string[];
   }
 ): Promise<INotification | null> => {
-  // Get user notification preferences
-  const settings = await getNotificationSettingsForUser(userId);
+  try {
+    // Get user notification preferences
+    const settings = await getNotificationSettingsForUser(userId);
 
-  // Only send emails for breach and summary types
-  // No website notifications needed
-  if (type !== "breach" && type !== "summary") {
-    return null;
-  }
+    // Create notification record in database (for website notifications)
+    const notification = new Notification({
+      userId,
+      type,
+      title,
+      message,
+      read: false,
+    });
+    await notification.save();
 
-  // Send email notification if enabled
-  // Always send to the signed-in Gmail (userId), not the monitored email
-  console.log(`Email notification check for user: ${userId}`);
-  console.log(`Email notifications enabled: ${settings.emailNotifications}`);
+    // Send email notification if enabled (only for breach and summary types)
+    // Always send to the signed-in Gmail (userId), not the monitored email
+    console.log(`Email notification check for user: ${userId}`);
+    console.log(`Email notifications enabled: ${settings.emailNotifications}`);
 
-  if (settings.emailNotifications) {
-    try {
-      // Use userId (signed-in email) as the recipient
-      const recipientEmail = userId;
-      console.log(`   Sending email to: ${recipientEmail}`);
+    if (
+      settings.emailNotifications &&
+      (type === "breach" || type === "summary")
+    ) {
+      try {
+        // Use userId (signed-in email) as the recipient
+        const recipientEmail = userId;
+        console.log(`Sending email to: ${recipientEmail}`);
 
-      if (
-        type === "breach" &&
-        emailData &&
-        emailData.breachCount &&
-        emailData.breachNames
-      ) {
-        // For breach notifications, show which monitored email was breached
-        const monitoredEmail = emailData.email || "your monitored email";
-        const emailHtml = generateBreachNotificationEmail(
-          monitoredEmail,
-          emailData.breachCount,
+        if (
+          type === "breach" &&
+          emailData &&
+          emailData.breachCount &&
           emailData.breachNames
-        );
-        await sendEmailNotification({
-          to: recipientEmail, // Send to signed-in Gmail
-          subject: `Breach Alert: ${emailData.breachCount} breach${
-            emailData.breachCount > 1 ? "es" : ""
-          } detected`,
-          html: emailHtml,
-        });
-      } else {
-        // Generic notification email
-        const emailHtml = `
+        ) {
+          // For breach notifications, show which monitored email was breached
+          const monitoredEmail = emailData.email || "your monitored email";
+          const emailHtml = generateBreachNotificationEmail(
+            monitoredEmail,
+            emailData.breachCount,
+            emailData.breachNames
+          );
+          await sendEmailNotification({
+            to: recipientEmail, // Send to signed-in Gmail
+            subject: `Breach Alert: ${emailData.breachCount} breach${
+              emailData.breachCount > 1 ? "es" : ""
+            } detected`,
+            html: emailHtml,
+          });
+        } else {
+          // Generic notification email
+          const emailHtml = `
           <!DOCTYPE html>
           <html>
             <head><meta charset="utf-8"></head>
@@ -313,18 +321,22 @@ export const createNotificationWithEmail = async (
             </body>
           </html>
         `;
-        await sendEmailNotification({
-          to: recipientEmail, // Send to signed-in Gmail
-          subject: title,
-          html: emailHtml,
-        });
+          await sendEmailNotification({
+            to: recipientEmail, // Send to signed-in Gmail
+            subject: title,
+            html: emailHtml,
+          });
+        }
+      } catch (error) {
+        console.error("Error sending email notification:", error);
+        // Don't fail if email fails - notification is already saved
       }
-    } catch (error) {
-      console.error("Error sending email notification:", error);
-      // Don't fail if email fails
     }
-  }
 
-  // Return null since we're only sending emails, not creating website notifications
-  return null;
+    return notification;
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    // Return null if notification creation fails
+    return null;
+  }
 };
