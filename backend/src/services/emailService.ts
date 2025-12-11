@@ -87,19 +87,19 @@ export async function sendEmailNotification(
     const transporter = createTransporter();
 
     if (transporter) {
-      console.log("   Transporter: ✅ Created successfully");
+      console.log("   Transporter: Created successfully");
     } else {
-      console.log("   Transporter: ❌ Failed to create");
+      console.log("   Transporter: Failed to create");
     }
 
     // If email service is not configured, log and skip
     if (!transporter) {
       console.log(
-        "\n⚠️  Email service not configured. Skipping email notification."
+        "\nEmail service not configured. Skipping email notification."
       );
       console.log("Email would be sent to:", options.to);
       console.log("Subject:", options.subject);
-      console.log("\n📧 To configure email service:");
+      console.log("\nTo configure email service:");
       console.log("   1. Create backend/.env or backend/.env.local file");
       console.log("   2. Add: SMTP_USER=your-email@gmail.com");
       console.log("   3. Add: SMTP_PASS=your-app-password");

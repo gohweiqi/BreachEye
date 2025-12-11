@@ -1,14 +1,149 @@
-# EmailBreachDetectionSystem
+# Email Breach Detection System
 
-# Testing Guide - Email Breach Check Function
+A comprehensive web-based system that enables users to monitor multiple email addresses for data breaches, visualize breach statistics, and receive real-time alerts. This project helps users stay informed about their email security and take proactive action before threats escalate.
 
-## Prerequisites
+## Project Overview
 
-Before testing, ensure both servers are running:
+**BreachEye** is a full-stack email breach detection and monitoring platform designed to empower users with email security awareness. The system integrates with trusted breach databases to check if email addresses have been compromised in known data breaches, providing detailed analytics, risk scoring, and actionable insights.
 
-### 1. Start Backend Server
+### Key Features
 
-Open a terminal and run:
+- ✅ Multi-email monitoring dashboard
+- ✅ Real-time breach checking and alerts
+- ✅ Risk score calculation based on breach data
+- ✅ Interactive breach history visualization
+- ✅ Email notification system (configurable)
+- ✅ Monthly security summary reports
+- ✅ Breach news feed integration
+- ✅ Responsive and modern UI design
+
+## Technology Stack
+
+### Frontend
+
+- **Next.js 15** - React framework with App Router
+- **React 19** - UI library
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Chart.js** - Data visualization
+- **NextAuth.js** - Authentication
+
+### Backend
+
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **TypeScript** - Type safety
+- **MongoDB** - Database (Mongoose)
+- **XposedOrNot API** - External breach data source
+- **Nodemailer** - Email service
+- **Node-cron** - Scheduled tasks
+
+## Quick Start Guide
+
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** (v18 or higher)
+- **npm** (v9 or higher) or **yarn**
+- **MongoDB** (local installation or MongoDB Atlas account)
+- **Git**
+
+### Installation Steps
+
+#### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd EmailBreachDetectionSystem
+```
+
+#### 2. Backend Setup
+
+Navigate to the backend directory and install dependencies:
+
+```bash
+cd backend
+npm install
+```
+
+Create a `.env.local` file in the `backend` directory:
+
+```env
+# Server Configuration
+PORT=5000
+NODE_ENV=development
+
+# MongoDB Configuration
+MONGODB_URI=mongodb://localhost:27017/breacheye
+
+# Frontend URL (for CORS)
+FRONTEND_URL=http://localhost:3000
+
+# Email Service Configuration (Optional - for notifications)
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+
+# Test Mode (Optional - for development)
+ENABLE_TEST_MODE=false
+```
+
+**Note**: For MongoDB Atlas (cloud), use your connection string instead:
+
+```env
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/breacheye
+```
+
+#### 3. Frontend Setup
+
+Open a new terminal, navigate to the frontend directory, and install dependencies:
+
+```bash
+cd frontend
+npm install
+```
+
+Create a `.env.local` file in the `frontend` directory:
+
+```env
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_secret_key_here
+
+# Google OAuth (for authentication)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Backend API URL
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
+**Note**: The `NEXTAUTH_SECRET` and Google OAuth credentials are only needed in the frontend `.env.local` file, not in the backend.
+
+#### 4. Start MongoDB
+
+Make sure MongoDB is running on your system:
+
+**Local MongoDB:**
+
+```bash
+# On macOS/Linux
+mongosh
+
+# On Windows
+# MongoDB should start automatically as a service, or run:
+mongosh
+```
+
+**MongoDB Atlas:**
+No local setup needed - just ensure your connection string in `.env` is correct.
+
+#### 5. Run the Application
+
+**Terminal 1 - Start Backend Server:**
 
 ```bash
 cd backend
@@ -18,16 +153,13 @@ npm run dev
 You should see:
 
 ```
-🚀 Server is running on http://localhost:5000
-📚 API Documentation: http://localhost:5000/health
-🔍 Breach Check API: http://localhost:5000/api/breach/check/:email
+Server is running on http://localhost:5000
+API Documentation: http://localhost:5000/health
+Breach Check API: http://localhost:5000/api/breach/check/:email
+Email Management API: http://localhost:5000/api/emails
 ```
 
-**Keep this terminal open!** The backend must keep running.
-
-### 2. Start Frontend Server
-
-Open a **different** terminal and run:
+**Terminal 2 - Start Frontend Server:**
 
 ```bash
 cd frontend
@@ -41,164 +173,46 @@ You should see:
 ○ Local:        http://localhost:3000
 ```
 
-## Testing Steps
+#### 6. Access the Application
 
-### Step 1: Verify Backend is Running
+Open your browser and navigate to:
 
-1. Open your browser
-2. Go to: `http://localhost:5000/health`
-3. You should see a JSON response like:
-   ```json
-   {
-     "success": true,
-     "message": "Email Breach Detection API is running",
-     "timestamp": "2024-..."
-   }
-   ```
-
-✅ If you see this, the backend is working!
-
-### Step 2: Test Email Check on Landing Page
-
-1. Open your browser
-2. Go to: `http://localhost:3000`
-3. You should see the landing page with the email input field
-
-### Step 3: Test with a Sample Email
-
-1. Enter an email address in the input field (e.g., `test@example.com`)
-2. Click the "Check" button or press Enter
-3. Wait for the results (may take 1-2 seconds due to rate limiting)
-
-### Expected Results
-
-#### If Email Has Breaches:
-
-- ✅ Red warning box appears
-- Shows breach count
-- Displays risk score with progress bar
-- Lists affected services
-- Shows latest incident date
-
-#### If Email Has No Breaches:
-
-- ✅ Green success box appears
-- Message: "No breaches found"
-- Security tips displayed
-
-#### If There's an Error:
-
-- ⚠️ Red error box appears
-- Clear error message explaining what went wrong
-- Troubleshooting steps provided
-
-## Testing Different Scenarios
-
-### Test Case 1: Valid Email (No Breaches)
-
-- **Input**: `newemail123@example.com`
-- **Expected**: Green success message
-- **Wait Time**: 1-2 seconds
-
-### Test Case 2: Valid Email (With Breaches)
-
-- **Input**: Any email that has been in known breaches
-- **Expected**: Red warning with breach details
-- **Wait Time**: 2-3 seconds (includes analytics)
-
-### Test Case 3: Invalid Email Format
-
-- **Input**: `notanemail`
-- **Expected**: Red validation error below input
-- **Message**: "Please enter a valid email address"
-
-### Test Case 4: Empty Input
-
-- **Input**: (nothing)
-- **Expected**: Red validation error
-- **Message**: "Please enter an email address"
-
-## Browser Console Testing
-
-To see detailed API calls:
-
-1. Open browser DevTools (Press F12)
-2. Go to the "Network" tab
-3. Filter by "XHR" or "Fetch"
-4. Try checking an email
-5. You should see:
-   - Request to: `http://localhost:5000/api/breach/check`
-   - Method: POST
-   - Status: 200 (if successful)
-
-## Troubleshooting
-
-### Error: "Unable to connect to the server"
-
-**Check:**
-
-1. ✅ Is the backend server running? (`npm run dev` in backend folder)
-2. ✅ Can you access `http://localhost:5000/health`?
-3. ✅ Check backend terminal for errors
-
-**Fix:**
-
-- Make sure backend is running in a separate terminal
-- Check if port 5000 is available
-- Verify `.env` file exists in backend folder
-
-### Error: "Request timeout"
-
-**Reason:** XposedOrNot API has rate limiting (1 query/second)
-
-**Fix:**
-
-- Wait a few seconds and try again
-- This is normal behavior
-
-### Error: CORS errors
-
-**Check:**
-
-- Backend `.env` has `FRONTEND_URL=http://localhost:3000`
-- Frontend is running on port 3000
-
-**Fix:**
-
-- Update backend `.env` if frontend runs on different port
-- Restart backend server after changing `.env`
-
-## Manual API Testing
-
-You can also test the API directly using curl:
-
-```bash
-# Test health endpoint
-curl http://localhost:5000/health
-
-# Test breach check
-curl -X POST http://localhost:5000/api/breach/check \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com"}'
+```
+http://localhost:3000
 ```
 
-## Success Indicators
+## Development
 
-✅ **Everything is working correctly if:**
+### Building for Production
 
-- Backend server shows "Server is running" message
-- Frontend loads without errors
-- Email check returns results (either breaches or no breaches)
-- No errors in browser console
-- Network tab shows successful API calls
+**Backend:**
 
-## Next Steps After Testing
+```bash
+cd backend
+npm run build
+npm start
+```
 
-Once everything works:
+**Frontend:**
 
-1. ✅ Test with different email addresses
-2. ✅ Verify UI displays correctly
-3. ✅ Check error handling with invalid inputs
-4. ✅ Test loading states (button shows "Checking...")
+```bash
+cd frontend
+npm run build
+npm start
+```
 
-Happy testing! 🚀
+### Environment Variables
+
+Make sure to set up all required environment variables in both `backend/.env.local` and `frontend/.env.local` before running the application.
+
+## License
+
+This project is developed as part of a Final Year Project for educational purposes.
+
+## Contributing
+
+This is a Final Year Project repository. For questions or issues, please contact the project maintainer.
+
+---
+
+**Note**: This system integrates with the XposedOrNot API, which has a rate limit of 1 query per second. The backend includes automatic rate limiting to comply with these restrictions.

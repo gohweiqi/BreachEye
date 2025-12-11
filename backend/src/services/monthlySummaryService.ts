@@ -82,7 +82,7 @@ export async function sendMonthlySummary(userId: string): Promise<void> {
       });
     }
 
-    console.log(`✅ Monthly summary sent to user: ${userId}`);
+    console.log(`Monthly summary sent to user: ${userId}`);
   } catch (error) {
     console.error(`Error sending monthly summary to user ${userId}:`, error);
   }
@@ -96,7 +96,7 @@ export async function sendMonthlySummariesToAllUsers(): Promise<void> {
     // Get all unique user IDs
     const users = await Email.distinct("userId");
 
-    console.log(`📊 Sending monthly summaries to ${users.length} users...`);
+    console.log(`Sending monthly summaries to ${users.length} users...`);
 
     // Send summary to each user (with some delay to avoid overwhelming the system)
     for (const userId of users) {
@@ -105,7 +105,7 @@ export async function sendMonthlySummariesToAllUsers(): Promise<void> {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    console.log(`✅ Monthly summaries sent to all users`);
+    console.log(`Monthly summaries sent to all users`);
   } catch (error) {
     console.error("Error sending monthly summaries:", error);
   }

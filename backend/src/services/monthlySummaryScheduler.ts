@@ -21,30 +21,28 @@ function isLastDayOfMonth(): boolean {
 /**
  * Initialize the monthly summary scheduler
  * Runs daily at 11:00 PM to check if it's the last day of the month
- * 
+ *
  * Set ENABLE_TEST_MODE=true in .env to run every minute for testing
  */
 export function initializeMonthlySummaryScheduler(): void {
-  console.log("📅 Monthly Summary Scheduler initialized");
+  console.log("Monthly Summary Scheduler initialized");
 
   // Check if test mode is enabled (for development/testing)
   const testMode = process.env.ENABLE_TEST_MODE === "true";
-  
+
   // Schedule: Run daily at 11:00 PM, or every minute in test mode
   const cronSchedule = testMode ? "* * * * *" : "0 23 * * *";
-  
+
   if (testMode) {
-    console.log("⚠️  TEST MODE ENABLED: Scheduler will run every minute");
-    console.log("⚠️  Remember to disable test mode in production!");
+    console.log("TEST MODE ENABLED: Scheduler will run every minute");
+    console.log("Remember to disable test mode in production!");
   }
 
   cron.schedule(cronSchedule, async () => {
     try {
       if (isLastDayOfMonth() || testMode) {
         if (testMode) {
-          console.log(
-            `TEST MODE: Sending monthly summaries to all users...`
-          );
+          console.log(`TEST MODE: Sending monthly summaries to all users...`);
         } else {
           console.log(
             `Last day of month detected. Sending monthly summaries to all users...`
@@ -52,9 +50,7 @@ export function initializeMonthlySummaryScheduler(): void {
         }
         await sendMonthlySummariesToAllUsers();
       } else {
-        console.log(
-          `Not the last day of the month. Skipping monthly summary.`
-        );
+        console.log(`Not the last day of the month. Skipping monthly summary.`);
       }
     } catch (error) {
       console.error("Error in monthly summary scheduler:", error);
@@ -75,4 +71,3 @@ export async function triggerMonthlySummaries(): Promise<void> {
   console.log("Manually triggering monthly summaries...");
   await sendMonthlySummariesToAllUsers();
 }
-

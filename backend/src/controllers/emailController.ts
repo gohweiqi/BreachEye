@@ -55,13 +55,13 @@ export const getEmails = async (req: Request, res: Response): Promise<void> => {
       });
 
       await newSignedInEmail.save();
-      console.log(`✅ Signed-in email automatically added to monitored list`);
+      console.log(`Signed-in email automatically added to monitored list`);
 
       // Check for breaches asynchronously (don't wait for it)
       (async () => {
         try {
           console.log(
-            `🔍 Checking breaches for signed-in email: ${signedInEmail}`
+            `Checking breaches for signed-in email: ${signedInEmail}`
           );
           const analytics = await XposedOrNotService.getBreachAnalytics(
             signedInEmail
@@ -315,7 +315,7 @@ export const addEmail = async (req: Request, res: Response): Promise<void> => {
     let breaches = 0;
 
     try {
-      console.log(`🔍 Checking breaches for email: ${email}`);
+      console.log(`Checking breaches for email: ${email}`);
       const analytics = await XposedOrNotService.getBreachAnalytics(email);
       const riskScore = XposedOrNotService.calculateRiskScore(analytics);
 
@@ -327,7 +327,7 @@ export const addEmail = async (req: Request, res: Response): Promise<void> => {
       // Log first breach for debugging - show all available fields
       if (breachDetails.length > 0) {
         console.log("=".repeat(80));
-        console.log("📊 RAW BREACH DATA FROM API (First Breach):");
+        console.log("RAW BREACH DATA FROM API (First Breach):");
         console.log("=".repeat(80));
         console.log(JSON.stringify(breachDetails[0], null, 2));
         console.log("Available keys:", Object.keys(breachDetails[0]));
@@ -493,18 +493,18 @@ export const addEmail = async (req: Request, res: Response): Promise<void> => {
       };
       breaches = breachDetails.length;
       status = breaches > 0 ? "breached" : "safe";
-      console.log(`✅ Breach check completed: ${breaches} breaches found`);
+      console.log(`Breach check completed: ${breaches} breaches found`);
     } catch (error) {
       // Log error but don't fail the request - email will be saved without breach data
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       if (errorMessage.includes("timeout")) {
         console.warn(
-          `⚠️  Breach check timeout for ${email}. Email saved without breach data.`
+          `Breach check timeout for ${email}. Email saved without breach data.`
         );
       } else {
         console.warn(
-          `⚠️  Error checking breaches for ${email}: ${errorMessage}. Email saved without breach data.`
+          `Error checking breaches for ${email}: ${errorMessage}. Email saved without breach data.`
         );
       }
       // Continue to save email even if breach check fails
