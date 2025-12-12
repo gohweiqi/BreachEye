@@ -22,8 +22,29 @@ const app: Application = express();
 const PORT = parseInt(process.env.PORT || "5000", 10);
 
 // CORS configuration - must be before other middleware
+// Supports multiple comma-separated origins and Vercel preview URLs.
+const defaultOrigins = ["http://localhost:3000"];
+const envOrigins = [
+  process.env.FRONTEND_URL,
+  ...(process.env.FRONTEND_URLS || "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
+].filter(Boolean);
+const allowedOrigins = [...defaultOrigins, ...envOrigins];
+const vercelPreviewRegex = /^https?:\/\/.*\.vercel\.app$/;
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  origin: (origin: string | undefined, callback: cors.CorsCallback) => {
+    // Allow non-browser requests (like curl) with no origin
+    if (!origin) return callback(null, true);
+
+    const isAllowed =
+      allowedOrigins.includes(origin) || vercelPreviewRegex.test(origin);
+
+    if (isAllowed) return callback(null, true);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
