@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Navbar from "../../../../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import { BreachAnalyticsResponse } from "@/lib/api/breachApi";
@@ -24,7 +24,6 @@ interface BreachDetail {
 
 const BreachDetailsPage: React.FC = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [breach, setBreach] = useState<BreachDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
