@@ -3,7 +3,9 @@
  * Centralized configuration for backend API endpoints
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://breacheye-production.up.railway.app";
 
 export const API_ENDPOINTS = {
   BREACH: {
