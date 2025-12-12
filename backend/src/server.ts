@@ -34,8 +34,8 @@ const envOrigins = [
 const allowedOrigins = [...defaultOrigins, ...envOrigins];
 const vercelPreviewRegex = /^https?:\/\/.*\.vercel\.app$/;
 
-const corsOptions = {
-  origin: (origin: string | undefined, callback: cors.CorsCallback) => {
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
     // Allow non-browser requests (like curl) with no origin
     if (!origin) return callback(null, true);
 
