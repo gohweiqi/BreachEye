@@ -3,9 +3,15 @@
  * Centralized configuration for backend API endpoints
  */
 
+// Get API URL from environment variable or use production default
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   "https://breacheye-production.up.railway.app";
+
+// Log API URL in development
+if (process.env.NODE_ENV === "development") {
+  console.log("API Base URL:", API_BASE_URL);
+}
 
 export const API_ENDPOINTS = {
   BREACH: {

@@ -69,6 +69,8 @@ class BreachService {
 
     try {
       console.log("Calling API:", API_ENDPOINTS.BREACH.CHECK);
+      console.log("API Base URL:", API_ENDPOINTS.BREACH.CHECK.split("/api")[0]);
+      console.log("Request payload:", { email });
 
       // Create timeout
       const timeoutId = setTimeout(() => {

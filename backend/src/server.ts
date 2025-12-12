@@ -82,6 +82,20 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
+// Root endpoint
+app.get("/", (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    message: "Email Breach Detection API",
+    version: "1.0.0",
+    endpoints: {
+      health: "/health",
+      breachCheck: "/api/breach/check",
+      breachAnalytics: "/api/breach/analytics/:email",
+    },
+  });
+});
+
 // API Routes
 app.use("/api/breach", breachRoutes);
 app.use("/api/emails", emailRoutes);
@@ -93,9 +107,17 @@ app.use("/api/news", newsRoutes);
 
 // 404 handler
 app.use("*", (req: Request, res: Response) => {
+  console.log(`404 - Route not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({
     success: false,
     error: "Route not found",
+    method: req.method,
+    path: req.originalUrl,
+    availableEndpoints: {
+      health: "GET /health",
+      breachCheck: "POST /api/breach/check",
+      breachAnalytics: "GET /api/breach/analytics/:email",
+    },
   });
 });
 

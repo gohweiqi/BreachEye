@@ -306,6 +306,8 @@ export class BreachController {
     res: Response
   ): Promise<void> {
     try {
+      console.log(`POST /api/breach/check - Request received`);
+      console.log(`Request body:`, req.body);
       const { email } = req.body;
 
       if (!email) {
