@@ -73,6 +73,19 @@ const limiter = rateLimit({
 
 app.use("/api/", limiter);
 
+// Request logging middleware for debugging
+app.use((req: Request, res: Response, next: express.NextFunction) => {
+  if (req.path.startsWith("/api/")) {
+    console.log(
+      `[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`
+    );
+    if (req.body && Object.keys(req.body).length > 0) {
+      console.log(`Request body:`, req.body);
+    }
+  }
+  next();
+});
+
 // Health check endpoint
 app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({
