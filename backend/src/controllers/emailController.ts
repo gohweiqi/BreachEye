@@ -864,6 +864,9 @@ export const checkEmail = async (
     const previousBreachCount = email.breaches || 0;
     const newBreachCount = breachDetails.length;
     const isNewBreach = newBreachCount > previousBreachCount;
+    // Also send notification if this is the first time breaches are detected (was safe, now breached)
+    const wasPreviouslySafe = previousBreachCount === 0;
+    const shouldNotify = isNewBreach || (wasPreviouslySafe && newBreachCount > 0);
 
     // Update email document
     email.breachData = breachData;
@@ -874,7 +877,7 @@ export const checkEmail = async (
     await email.save();
 
     // Create notification if new breaches were detected or if this is the first check with breaches
-    if (isNewBreach && newBreachCount > 0 && breachData) {
+    if (shouldNotify && newBreachCount > 0 && breachData) {
       try {
         const breachNames = breachData.breaches
           ? (breachData.breaches as any[])

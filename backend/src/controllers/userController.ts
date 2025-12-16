@@ -5,6 +5,8 @@
 
 import { Request, Response } from "express";
 import Email from "../models/Email";
+import Notification from "../models/Notification";
+import NotificationSettings from "../models/NotificationSettings";
 
 /**
  * Get user account data
@@ -92,17 +94,28 @@ export const deleteUserAccount = async (
       return;
     }
 
-    // Delete all emails for this user
-    const deleteResult = await Email.deleteMany({ userId });
+    // Delete all user data: emails, notifications, and notification settings
+    const [emailResult, notificationResult, settingsResult] = await Promise.all([
+      Email.deleteMany({ userId }),
+      Notification.deleteMany({ userId }),
+      NotificationSettings.deleteMany({ userId }),
+    ]);
 
     console.log(
-      `Deleted ${deleteResult.deletedCount} emails for user: ${userId}`
+      `Deleted account data for user: ${userId}`,
+      `- Emails: ${emailResult.deletedCount}`,
+      `- Notifications: ${notificationResult.deletedCount}`,
+      `- Notification Settings: ${settingsResult.deletedCount}`
     );
 
     res.status(200).json({
       success: true,
       message: "Account and all associated data deleted successfully",
-      deletedCount: deleteResult.deletedCount,
+      deletedCount: {
+        emails: emailResult.deletedCount,
+        notifications: notificationResult.deletedCount,
+        notificationSettings: settingsResult.deletedCount,
+      },
     });
   } catch (error) {
     console.error("Error deleting user account:", error);
