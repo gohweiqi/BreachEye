@@ -28,22 +28,33 @@ export async function sendEmailNotification(
   try {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      console.warn(
-        "\n[EmailService] RESEND_API_KEY missing. Skipping email send."
-      );
+      console.error("\n[EmailService] RESEND_API_KEY missing!");
+      console.error("Please set RESEND_API_KEY in your environment variables.");
+      console.error("Get your API key from: https://resend.com/api-keys");
+      console.error("Email will NOT be sent.");
       return;
     }
 
+    // Support multiple environment variable names for "from" address
     const fromAddress =
+      process.env.SMTP_FROM || // User's existing variable
       process.env.EMAIL_FROM ||
       process.env.RESEND_FROM ||
-      "onboarding@resend.dev";
+      "onboarding@resend.dev"; // Resend default (requires domain verification)
 
-    // Basic debug (don’t print secrets)
+    // Basic debug (don't print secrets)
     console.log("\n[EmailService] Resend Debug:");
-    console.log("   From:", fromAddress);
-    console.log("   To:", options.to);
-    console.log("   Subject:", options.subject);
+    console.log("RESEND_API_KEY: Found");
+    console.log("From:", fromAddress);
+    console.log("To:", options.to);
+    console.log("Subject:", options.subject);
+
+    // Warn if using default Resend address (may not work without domain verification)
+    if (fromAddress === "onboarding@resend.dev") {
+      console.warn(
+        "Using default Resend address. Set SMTP_FROM or EMAIL_FROM for better deliverability."
+      );
+    }
 
     const payload = {
       from: fromAddress,
@@ -64,16 +75,29 @@ export async function sendEmailNotification(
       }
     );
 
-    console.log("   ✅ Resend accepted email. ID:", response.data?.id ?? "N/A");
+    console.log("Resend accepted email. ID:", response.data?.id ?? "N/A");
+    console.log("Email queued for delivery to:", options.to);
   } catch (error: any) {
     const status = error?.response?.status;
     const body = error?.response?.data;
 
-    console.error("\n[EmailService] ❌ Resend send failed.");
-    console.error("   Status:", status ?? "Unknown");
-    console.error("   Response:", body ?? error?.message ?? error);
+    console.error("\n[EmailService] Resend send failed.");
+    console.error("Status:", status ?? "Unknown");
+    console.error("Response:", body ?? error?.message ?? error);
 
-    // Don’t throw (you said you don’t want email failures to break the system)
+    // Provide helpful error messages
+    if (status === 401 || status === 403) {
+      console.error("Invalid API key. Check your RESEND_API_KEY.");
+    } else if (status === 422) {
+      console.error("Invalid email format or unverified domain.");
+      console.error(
+        "Check your 'from' address is verified in Resend dashboard."
+      );
+    } else if (status === 429) {
+      console.error("Rate limit exceeded. Wait a moment and try again.");
+    }
+
+    // Don't throw (you said you don't want email failures to break the system)
     return;
   }
 }

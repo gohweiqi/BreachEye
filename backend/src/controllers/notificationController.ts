@@ -272,8 +272,13 @@ export const createNotificationWithEmail = async (
 
     // Send email notification if enabled (only for breach and summary types)
     // Always send to the signed-in Gmail (userId), not the monitored email
-    console.log(`Email notification check for user: ${userId}`);
+    console.log("\n[NotificationController] Email notification check:");
+    console.log(`User ID: ${userId}`);
+    console.log(`Type: ${type}`);
     console.log(`Email notifications enabled: ${settings.emailNotifications}`);
+    console.log(
+      `   RESEND_API_KEY: ${process.env.RESEND_API_KEY ? "Found" : "Missing"}`
+    );
 
     if (
       settings.emailNotifications &&
@@ -282,7 +287,7 @@ export const createNotificationWithEmail = async (
       try {
         // Use userId (signed-in email) as the recipient
         const recipientEmail = userId;
-        console.log(`Sending email to: ${recipientEmail}`);
+        console.log(`Attempting to send email to: ${recipientEmail}`);
 
         if (
           type === "breach" &&
@@ -328,8 +333,21 @@ export const createNotificationWithEmail = async (
           });
         }
       } catch (error) {
-        console.error("Error sending email notification:", error);
+        console.error(
+          "\n[NotificationController] Error sending email notification:"
+        );
+        console.error("Error:", error);
         // Don't fail if email fails - notification is already saved
+      }
+    } else {
+      if (!settings.emailNotifications) {
+        console.log(
+          "Skipping email: Email notifications disabled in user settings"
+        );
+      } else if (type !== "breach" && type !== "summary") {
+        console.log(
+          `Skipping email: Type '${type}' does not trigger email notifications`
+        );
       }
     }
 
