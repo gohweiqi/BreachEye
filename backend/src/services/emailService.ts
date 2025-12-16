@@ -16,10 +16,18 @@ const createTransporter = () => {
   // Check if using Gmail (most common)
   if (process.env.SMTP_USER && process.env.SMTP_USER.includes("@gmail.com")) {
     return nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // true for 465, false for other ports
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS, // Use App Password, not regular password
+      },
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000, // 10 seconds
+      socketTimeout: 10000, // 10 seconds
+      tls: {
+        rejectUnauthorized: false, // Allow self-signed certificates
       },
     });
   }
@@ -46,16 +54,30 @@ const createTransporter = () => {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      connectionTimeout: parseInt(process.env.SMTP_TIMEOUT || "10000"), // Default 10 seconds
+      greetingTimeout: parseInt(process.env.SMTP_TIMEOUT || "10000"),
+      socketTimeout: parseInt(process.env.SMTP_TIMEOUT || "10000"),
+      tls: {
+        rejectUnauthorized: process.env.SMTP_REJECT_UNAUTHORIZED !== "false",
+      },
     });
   }
 
   // Default to Gmail if SMTP_USER is set but no host specified
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     return nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // true for 465, false for other ports
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
+      },
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000, // 10 seconds
+      socketTimeout: 10000, // 10 seconds
+      tls: {
+        rejectUnauthorized: false, // Allow self-signed certificates
       },
     });
   }
@@ -81,6 +103,24 @@ export async function sendEmailNotification(
       "   SMTP_PASS:",
       process.env.SMTP_PASS ? "Found (****)" : "Not found"
     );
+    console.log(
+      "   SMTP_FROM:",
+      process.env.SMTP_FROM
+        ? `Found (${process.env.SMTP_FROM})`
+        : "Not found - will use SMTP_USER or default"
+    );
+    console.log(
+      "   SMTP_HOST:",
+      process.env.SMTP_HOST
+        ? `Found (${process.env.SMTP_HOST})`
+        : "Not found - will use Gmail default"
+    );
+    console.log(
+      "   SMTP_PORT:",
+      process.env.SMTP_PORT
+        ? `Found (${process.env.SMTP_PORT})`
+        : "Not found - will use default (587)"
+    );
     console.log("   Email will be sent to:", options.to);
     console.log("   Subject:", options.subject);
 
@@ -88,6 +128,18 @@ export async function sendEmailNotification(
 
     if (transporter) {
       console.log("   Transporter: Created successfully");
+      // Log which configuration is being used
+      if (process.env.SMTP_HOST) {
+        console.log(
+          `   Using custom SMTP: ${process.env.SMTP_HOST}:${
+            process.env.SMTP_PORT || "587"
+          }`
+        );
+      } else if (process.env.SMTP_USER?.includes("@gmail.com")) {
+        console.log("   Using Gmail SMTP: smtp.gmail.com:587");
+      } else {
+        console.log("   Using default Gmail SMTP configuration");
+      }
     } else {
       console.log("   Transporter: Failed to create");
     }
@@ -119,18 +171,67 @@ export async function sendEmailNotification(
     };
 
     console.log("   Attempting to send email...");
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`Email sent successfully to ${options.to}`);
-    console.log(`Message ID: ${info.messageId}`);
-    console.log(`Response: ${info.response}`);
 
-    // Show preview URL for Ethereal Email (testing)
-    if (process.env.ETHEREAL_EMAIL_USER) {
-      const previewUrl = nodemailer.getTestMessageUrl(info);
-      if (previewUrl) {
-        console.log(`Preview URL: ${previewUrl}`);
+    // Retry logic for sending email (up to 2 retries)
+    let lastError: Error | null = null;
+    const maxRetries = 2;
+
+    for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      try {
+        if (attempt > 1) {
+          console.log(`   Retry attempt ${attempt - 1}/${maxRetries}...`);
+          // Wait before retry (exponential backoff)
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+        }
+
+        // Verify connection before sending (only on first attempt)
+        if (attempt === 1) {
+          try {
+            await transporter.verify();
+            console.log("   SMTP connection verified successfully");
+          } catch (verifyError) {
+            console.warn(
+              "   SMTP verification failed, but attempting to send anyway:",
+              verifyError
+            );
+            // Don't throw - sometimes verify fails but sendMail works
+          }
+        }
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`Email sent successfully to ${options.to}`);
+        console.log(`Message ID: ${info.messageId}`);
+        console.log(`Response: ${info.response}`);
+
+        // Show preview URL for Ethereal Email (testing)
+        if (process.env.ETHEREAL_EMAIL_USER) {
+          const previewUrl = nodemailer.getTestMessageUrl(info);
+          if (previewUrl) {
+            console.log(`Preview URL: ${previewUrl}`);
+          }
+        }
+
+        return; // Success, exit function
+      } catch (sendError) {
+        lastError =
+          sendError instanceof Error ? sendError : new Error(String(sendError));
+        console.error(`   Attempt ${attempt} failed:`, lastError.message);
+
+        // If it's a timeout and we have retries left, continue
+        if (
+          attempt <= maxRetries &&
+          (lastError.message.includes("timeout") ||
+            lastError.message.includes("ETIMEDOUT"))
+        ) {
+          continue;
+        }
+        // Otherwise, throw the error
+        throw lastError;
       }
     }
+
+    // If we get here, all retries failed
+    throw lastError || new Error("Failed to send email after retries");
   } catch (error) {
     console.error("Error sending email notification:", error);
     if (error instanceof Error) {
@@ -150,8 +251,25 @@ export async function sendEmailNotification(
         console.error(
           "   → SSL certificate issue. Try setting SMTP_SECURE=false"
         );
-      } else if (error.message.includes("Connection timeout")) {
-        console.error("   → Network issue. Check your internet connection");
+      } else if (
+        error.message.includes("Connection timeout") ||
+        error.message.includes("ETIMEDOUT")
+      ) {
+        console.error("   → Connection timeout. Possible issues:");
+        console.error("      - Gmail SMTP may be blocking the connection");
+        console.error(
+          "      - Check if 'Less secure app access' is enabled (deprecated)"
+        );
+        console.error(
+          "      - Ensure you're using an App Password (not regular password)"
+        );
+        console.error(
+          "      - Try using SMTP_HOST=smtp.gmail.com and SMTP_PORT=587 explicitly"
+        );
+        console.error("      - Check firewall/network restrictions");
+        console.error(
+          "      - For Vercel/deployed apps, Gmail may require OAuth2 instead of App Passwords"
+        );
       } else {
         console.error("   → Full error details:", error);
       }
