@@ -64,14 +64,29 @@ app.use(
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
-// Rate limiting middleware
-const limiter = rateLimit({
+// Global rate limiting middleware for all API routes
+const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
   message: "Too many requests from this IP, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
-app.use("/api/", limiter);
+// Stricter rate limit specifically for breach-checking endpoints,
+// to protect the external XposedOrNot API and our server from spam clicks
+const breachLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute window
+  max: 5, // max 5 breach checks per IP per minute
+  message:
+    "You are checking too many emails too quickly. Please wait a bit and try again.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiters
+app.use("/api/", globalLimiter);
+app.use("/api/breach", breachLimiter);
 
 // Request logging middleware for debugging
 app.use((req: Request, res: Response, next: express.NextFunction) => {
