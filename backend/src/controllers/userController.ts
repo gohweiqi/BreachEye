@@ -94,18 +94,20 @@ export const deleteUserAccount = async (
       return;
     }
 
-    // Delete all user data: emails, notifications, and notification settings
+    // Delete all user data: Emails, Notifications, and NotificationSettings
     const [emailResult, notificationResult, settingsResult] = await Promise.all([
       Email.deleteMany({ userId }),
       Notification.deleteMany({ userId }),
-      NotificationSettings.deleteMany({ userId }),
+      NotificationSettings.deleteOne({ userId }),
     ]);
 
     console.log(
       `Deleted account data for user: ${userId}`,
-      `- Emails: ${emailResult.deletedCount}`,
-      `- Notifications: ${notificationResult.deletedCount}`,
-      `- Notification Settings: ${settingsResult.deletedCount}`
+      {
+        emails: emailResult.deletedCount,
+        notifications: notificationResult.deletedCount,
+        settings: settingsResult.deletedCount,
+      }
     );
 
     res.status(200).json({
@@ -114,7 +116,7 @@ export const deleteUserAccount = async (
       deletedCount: {
         emails: emailResult.deletedCount,
         notifications: notificationResult.deletedCount,
-        notificationSettings: settingsResult.deletedCount,
+        settings: settingsResult.deletedCount,
       },
     });
   } catch (error) {

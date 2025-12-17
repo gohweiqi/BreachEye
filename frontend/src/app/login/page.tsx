@@ -9,7 +9,10 @@ const LoginPage = () => {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      await signIn("google", { callbackUrl: "/" });
+      await signIn("google", { 
+        callbackUrl: "/",
+        prompt: "select_account"
+      });
     } finally {
       setIsLoading(false);
     }
