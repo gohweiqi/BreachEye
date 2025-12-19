@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
     SEARCH: `${API_BASE_URL}/api/news/search`,
   },
   MONTHLY_SUMMARY: `${API_BASE_URL}/api/monthly-summary`,
+  STATISTICS: `${API_BASE_URL}/api/statistics`,
   HEALTH: `${API_BASE_URL}/health`,
 };
 

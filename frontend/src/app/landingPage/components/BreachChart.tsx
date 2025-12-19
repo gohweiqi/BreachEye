@@ -22,13 +22,48 @@ ChartJS.register(
 );
 
 /** Breach Chart Component */
-export default function BreachChart() {
+interface BreachChartProps {
+  breachesByYear?: Record<string, number>;
+  isLoading?: boolean;
+}
+
+export default function BreachChart({
+  breachesByYear,
+  isLoading = false,
+}: BreachChartProps) {
+  const years = ["2019", "2020", "2021", "2022", "2023", "2024"];
+  const defaultData = [150, 180, 120, 90, 60, 40]; // HIBP fallback data
+
+  // Get chart data - use real data if available, otherwise use defaults
+  const getChartData = (): number[] => {
+    if (isLoading) {
+      return defaultData;
+    }
+
+    if (!breachesByYear || Object.keys(breachesByYear).length === 0) {
+      return defaultData;
+    }
+
+    const apiData = years.map((year) => {
+      const value = breachesByYear[year];
+      return typeof value === "number" ? value : 0;
+    });
+
+    // If all zeros, use default
+    const allZeros = apiData.every((val) => val === 0);
+    if (allZeros) {
+      return defaultData;
+    }
+
+    return apiData;
+  };
+
   const chartData = {
-    labels: ["2019", "2020", "2021", "2022", "2023", "2024"],
+    labels: years,
     datasets: [
       {
         label: "Number of Breaches",
-        data: [1200, 1500, 1800, 2100, 2400, 2000],
+        data: getChartData(),
         backgroundColor: "rgba(212, 175, 55, 0.6)",
         borderColor: "#D4AF37",
         borderWidth: 2,

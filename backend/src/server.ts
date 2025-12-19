@@ -10,6 +10,7 @@ import notificationRoutes from "./routes/notificationRoutes";
 import notificationSettingsRoutes from "./routes/notificationSettingsRoutes";
 import monthlySummaryRoutes from "./routes/monthlySummaryRoutes";
 import newsRoutes from "./routes/newsRoutes";
+import statisticsRoutes from "./routes/statisticsRoutes";
 import { connectDatabase } from "./config/database";
 import { initializeMonthlySummaryScheduler } from "./services/monthlySummaryScheduler";
 
@@ -132,6 +133,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/notification-settings", notificationSettingsRoutes);
 app.use("/api/monthly-summary", monthlySummaryRoutes);
 app.use("/api/news", newsRoutes);
+app.use("/api/statistics", statisticsRoutes);
 
 // 404 handler
 app.use("*", (req: Request, res: Response) => {
