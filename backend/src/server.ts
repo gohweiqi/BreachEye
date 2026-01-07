@@ -13,6 +13,7 @@ import newsRoutes from "./routes/newsRoutes";
 import statisticsRoutes from "./routes/statisticsRoutes";
 import { connectDatabase } from "./config/database";
 import { initializeMonthlySummaryScheduler } from "./services/monthlySummaryScheduler";
+import { initializeAutoCheckScheduler } from "./services/autoCheckScheduler";
 
 // Load environment variables (supports .env.local for local development)
 dotenv.config();
@@ -169,8 +170,9 @@ const startServer = async () => {
     // Connect to MongoDB
     await connectDatabase();
 
-    // Initialize monthly summary scheduler
+    // Initialize schedulers
     initializeMonthlySummaryScheduler();
+    initializeAutoCheckScheduler();
 
     // Start Express server
     app.listen(PORT, "0.0.0.0", () => {
