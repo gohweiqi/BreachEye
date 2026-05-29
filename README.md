@@ -181,5 +181,5 @@ This project is developed as part of a Final Year Project for educational purpos
 
 ## Contributing
 This is a Final Year Project repository. For questions or issues, please contact the project maintainer.
----
+
 **Note**: This system integrates with the XposedOrNot API, which has a rate limit of 1 query per second. The backend includes automatic rate limiting to comply with these restrictions.
